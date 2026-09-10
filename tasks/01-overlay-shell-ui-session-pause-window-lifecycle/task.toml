@@ -1,0 +1,22 @@
+schema_version = "1.0"
+
+[task]
+name = "forge/tui-gamepigeon-overlay-shell-ui-session-pause-window-lifecycle"
+description = "Restore the Tui overlay's game session lifecycle (launch/pause/resume/restart/replay/end), its pause/prompt/game-over/how-to-play/sign-out dialogs, and its native window minimize/restore/drag/resize orchestration."
+difficulty = "hard"
+
+[environment]
+dockerfile = "environment/Dockerfile"
+workdir = "/app"
+
+[agent]
+user = "agent"
+timeout_sec = 1800
+
+[verifier]
+user = "root"
+timeout_sec = 300
+
+[tests]
+command = "bash tests/test.sh"
+

@@ -1,0 +1,873 @@
+diff --git a/cloudflare/auth-worker/src/auth.ts b/cloudflare/auth-worker/src/auth.ts
+index ca870f8..44a65e2 100644
+--- a/cloudflare/auth-worker/src/auth.ts
++++ b/cloudflare/auth-worker/src/auth.ts
+@@ -8,6 +8,10 @@ export interface AuthEnv {
+   BETTER_AUTH_URL: string;
+   PUBLIC_GAME_URL: string;
+   BETTER_AUTH_TRUSTED_ORIGINS?: string;
++  GOOGLE_CLIENT_ID?: string;
++  GOOGLE_CLIENT_SECRET?: string;
++  GITHUB_CLIENT_ID?: string;
++  GITHUB_CLIENT_SECRET?: string;
+ }
+ 
+ export function trustedOrigins(env: AuthEnv): string[] {
+@@ -19,6 +23,20 @@ export function trustedOrigins(env: AuthEnv): string[] {
+ }
+ 
+ export function createAuth(env: AuthEnv) {
++  const socialProviders: NonNullable<Parameters<typeof betterAuth>[0]["socialProviders"]> = {};
++  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
++    socialProviders.google = {
++      clientId: env.GOOGLE_CLIENT_ID,
++      clientSecret: env.GOOGLE_CLIENT_SECRET,
++    };
++  }
++  if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) {
++    socialProviders.github = {
++      clientId: env.GITHUB_CLIENT_ID,
++      clientSecret: env.GITHUB_CLIENT_SECRET,
++    };
++  }
++
+   return betterAuth({
+     database: env.DB,
+     baseURL: env.BETTER_AUTH_URL,
+@@ -32,7 +50,7 @@ export function createAuth(env: AuthEnv) {
+     account: {
+       storeStateStrategy: "cookie",
+     },
++    socialProviders,
+     plugins: [bearer()],
+   });
+ }
+-
+diff --git a/cloudflare/auth-worker/src/handoff-page.ts b/cloudflare/auth-worker/src/handoff-page.ts
+new file mode 100644
+index 0000000..8fafd39
+--- /dev/null
++++ b/cloudflare/auth-worker/src/handoff-page.ts
+@@ -0,0 +1,143 @@
++// Browser-facing pages for the CLI/overlay OAuth handoff. These Worker
++// responses are the only ones a person ever looks at, so they carry Tui
++// branding and always say what to do next.
++//
++// The same design is rendered by the two localhost listeners that finish the
++// handoff — `src/auth.ts` (CLI) and `tauri/src/main.rs` (overlay). The three
++// copies exist because they run in three different runtimes; keep the copy and
++// palette in sync when changing one.
++
++const STYLE = `
++:root{color-scheme:light}
++*{box-sizing:border-box}
++body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
++background:radial-gradient(900px 500px at 50% -20%,#fff 0%,#eef2f8 60%,#e3eaf4 100%);color:#0f172a;
++font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
++.card{position:relative;overflow:hidden;width:min(100%,420px);padding:34px 28px 30px;text-align:center;
++background:#fff;border:1px solid #e2e8f0;border-radius:16px;
++box-shadow:0 20px 50px rgba(15,23,42,.12),0 8px 20px rgba(15,23,42,.06)}
++.card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;
++background:linear-gradient(90deg,#2955c9 0%,#3772ff 38%,#3bb273 72%,#e6a830 100%)}
++.badge{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0 auto 16px;border-radius:999px}
++.badge svg{width:22px;height:22px}
++[data-tone=ok] .badge{background:rgba(59,178,115,.14);color:#2e8f5c}
++[data-tone=warn] .badge{background:rgba(223,41,53,.12);color:#b81f2a}
++.eyebrow{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2955c9}
++h1{margin:0 0 10px;font-size:23px;line-height:1.25;letter-spacing:-.01em}
++.lead{margin:0;color:#475569}
++.steps{margin:18px 0 0;padding:0;list-style:none;text-align:left;border-top:1px solid #e2e8f0}
++.steps li{position:relative;margin:0;padding:10px 0 0 18px;font-size:13.5px;color:#475569}
++.steps li:first-child{padding-top:14px}
++.steps li::before{content:"";position:absolute;left:2px;top:18px;width:5px;height:5px;border-radius:999px;background:#cbd5e1}
++.steps li:first-child::before{top:22px}
++.action{display:inline-block;margin-top:20px;padding:10px 22px;border:1px solid #e6a830;border-radius:999px;
++background:#ffc857;color:#3d2e00;font-weight:700;font-size:13px;line-height:1;text-decoration:none}
++.action:hover,.action:focus-visible{background:#e6a830}
++.hint{margin:16px 0 0;font-size:12.5px;color:#64748b}
++code{font:600 12.5px/1.4 ui-monospace,"SF Mono",Menlo,monospace;background:#f3f6fb;border:1px solid #e2e8f0;border-radius:5px;padding:2px 5px;overflow-wrap:anywhere;-webkit-box-decoration-break:clone;box-decoration-break:clone}
++@media (max-width:400px){.card{padding:28px 20px 24px}h1{font-size:21px}}
++`.trim();
++
++const CHECK_ICON =
++  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
++const ALERT_ICON =
++  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>';
++
++export function escapeHtml(value: string): string {
++  return value.replace(
++    /[&<>"']/g,
++    (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!,
++  );
++}
++
++// `lead` and `steps` are interpolated as trusted HTML so copy can carry <code>
++// spans; everything else is escaped. Never pass request-supplied text through
++// them — escape it with `escapeHtml` at the call site first.
++interface PageOptions {
++  tone: "ok" | "warn";
++  /** Browser tab title; also the page heading unless `heading` overrides it. */
++  title: string;
++  heading?: string;
++  lead: string;
++  /** What to do next — rendered as a short list. */
++  steps?: string[];
++  action?: { href: string; label: string };
++  hint?: string;
++  /** Localhost URL to hand the session back to, once the page has rendered. */
++  redirectTo?: string;
++}
++
++/** Renders one self-contained Tui page — no external CSS, fonts, or images. */
++export function arcadePage(options: PageOptions): string {
++  const heading = options.heading ?? options.title;
++  const steps = options.steps?.length
++    ? `<ul class="steps">${options.steps.map((step) => `<li>${step}</li>`).join("")}</ul>`
++    : "";
++  const action = options.action
++    ? `<a class="action" href="${escapeHtml(options.action.href)}">${escapeHtml(options.action.label)}</a>`
++    : "";
++  const hint = options.hint ? `<p class="hint">${options.hint}</p>` : "";
++  // Redirect from a rendered page rather than a bare 302 so the confirmation is
++  // visible, and so a blocked redirect leaves the user on a page that explains
++  // itself instead of a dead tab. `location.replace` keeps the token-bearing URL
++  // out of history; the meta refresh covers browsers with scripting disabled.
++  const redirect = options.redirectTo
++    ? `<meta http-equiv="refresh" content="0;url=${escapeHtml(options.redirectTo)}">` +
++      `<script>location.replace(${JSON.stringify(options.redirectTo).replace(/</g, "\\u003c")})</script>`
++    : "";
++
++  return `<!doctype html>
++<html lang="en">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<meta name="robots" content="noindex">
++<title>Tui — ${escapeHtml(options.title)}</title>
++${redirect}
++<style>${STYLE}</style>
++</head>
++<body>
++<main class="card" data-tone="${options.tone}">
++<span class="badge">${options.tone === "ok" ? CHECK_ICON : ALERT_ICON}</span>
++<p class="eyebrow">Tui</p>
++<h1>${escapeHtml(heading)}</h1>
++<p class="lead">${options.lead}</p>
++${steps}
++${action}
++${hint}
++</main>
++</body>
++</html>`;
++}
++
++/** Pages carry session tokens in their URL — keep them out of caches and referrers. */
++export function pageResponse(body: string, status = 200): Response {
++  return new Response(body, {
++    status,
++    headers: {
++      "content-type": "text/html; charset=utf-8",
++      "cache-control": "no-store",
++      "referrer-policy": "no-referrer",
++    },
++  });
++}
++
++/** Success: hands the session token back to the waiting localhost listener. */
++export function handoffSuccessPage(redirectTo: string): string {
++  return arcadePage({
++    tone: "ok",
++    title: "Signed in",
++    lead: "Handing you back to Tui now. You can close this tab once it does.",
++    action: { href: redirectTo, label: "Continue to Tui" },
++    hint: "Not moving? Use the button above, or return to Tui and sign in again.",
++    redirectTo,
++  });
++}
++
++export function handoffErrorPage(options: {
++  title: string;
++  lead: string;
++  steps?: string[];
++}): string {
++  return arcadePage({ tone: "warn", ...options });
++}
+diff --git a/cloudflare/auth-worker/src/index.ts b/cloudflare/auth-worker/src/index.ts
+index f68dddf..1388f2d 100644
+--- a/cloudflare/auth-worker/src/index.ts
++++ b/cloudflare/auth-worker/src/index.ts
+@@ -1,5 +1,45 @@
+ import { getMigrations } from "better-auth/db/migration";
+ import { createAuth, trustedOrigins, type AuthEnv } from "./auth";
++import { handoffErrorPage, handoffSuccessPage, pageResponse } from "./handoff-page";
++
++function sessionTokenFromCookie(request: Request): string | null {
++  const cookie = request.headers.get("cookie");
++  if (!cookie) return null;
++  for (const part of cookie.split(";")) {
++    const [rawName, ...rest] = part.trim().split("=");
++    const name = rawName?.trim();
++    if (name === "better-auth.session_token" || name?.endsWith(".session_token")) {
++      return decodeURIComponent(rest.join("="));
++    }
++  }
++  return null;
++}
++
++function invalidTargetPage(): Response {
++  return pageResponse(
++    handoffErrorPage({
++      title: "Sign-in can't be handed back",
++      lead: "This sign-in link points somewhere Tui can't accept a session.",
++      steps: [
++        "Start sign-in from the Tui overlay, or run <code>gamepigeon auth login</code>.",
++        "Tui only accepts a handoff to your own machine (<code>127.0.0.1</code>), so links copied between devices won't work.",
++      ],
++    }),
++    400,
++  );
++}
++
++function localhostCallback(raw: string): URL | null {
++  let url: URL;
++  try {
++    url = new URL(raw);
++  } catch {
++    return null;
++  }
++  return url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost")
++    ? url
++    : null;
++}
+ 
+ function authCors(request: Request, response: Response, env: AuthEnv): Response {
+   const origin = request.headers.get("origin");
+@@ -51,6 +91,111 @@ export default {
+       });
+     }
+ 
++    if (url.pathname === "/cli/handoff" && request.method === "GET") {
++      const next = url.searchParams.get("next") ?? "http://127.0.0.1:3210/auth/callback";
++      const nextUrl = localhostCallback(next);
++      if (!nextUrl) {
++        return invalidTargetPage();
++      }
++
++      const auth = createAuth(env);
++      const session = await auth.api.getSession({ headers: request.headers });
++      const token = sessionTokenFromCookie(request);
++      if (!session?.user || !token) {
++        return pageResponse(
++          handoffErrorPage({
++            title: "Sign-in didn't finish",
++            lead: "This browser doesn't have a signed-in session, so there's nothing to hand back to Tui.",
++            steps: [
++              "Start again from Tui, or run <code>gamepigeon auth oauth google</code> (or <code>github</code>).",
++              "If you cancelled at the provider's consent screen, approve it this time.",
++              "Third-party cookie blocking can drop the session mid-flow — try a normal (non-private) window.",
++            ],
++          }),
++          401,
++        );
++      }
++
++      // `next` already carries the overlay's `state` nonce; searchParams keeps it
++      // and appends `token` with a proper `&`, which is what both listeners expect.
++      nextUrl.searchParams.set("token", token);
++      return pageResponse(handoffSuccessPage(nextUrl.toString()));
++    }
++
++    if (url.pathname === "/cli/oauth" && request.method === "GET") {
++      const provider = url.searchParams.get("provider");
++      if (provider !== "google" && provider !== "github") {
++        return pageResponse(
++          handoffErrorPage({
++            title: "That sign-in provider isn't supported",
++            lead: "Tui signs you in with Google or GitHub.",
++            steps: ["Run <code>gamepigeon auth oauth google</code> or <code>gamepigeon auth oauth github</code>."],
++          }),
++          400,
++        );
++      }
++      const configured = provider === "github"
++        ? env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
++        : env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET;
++      if (!configured) {
++        const name = provider === "github" ? "GitHub" : "Google";
++        return pageResponse(
++          handoffErrorPage({
++            title: `${name} sign-in isn't available`,
++            lead: `${name} OAuth is not configured on this Tui server.`,
++            steps: [
++              "Sign in with email and password instead, or try the other provider.",
++              "Run <code>gamepigeon auth login</code> to use email and password from the terminal.",
++            ],
++          }),
++          503,
++        );
++      }
++      const next = url.searchParams.get("next") ?? "http://127.0.0.1:3210/auth/callback";
++      const nextUrl = localhostCallback(next);
++      if (!nextUrl) {
++        return invalidTargetPage();
++      }
++
++      const handoff = new URL("/cli/handoff", env.BETTER_AUTH_URL);
++      handoff.searchParams.set("next", nextUrl.toString());
++      const headers = new Headers(request.headers);
++      headers.set("content-type", "application/json");
++      headers.set("origin", new URL(env.BETTER_AUTH_URL).origin);
++      const response = await createAuth(env).handler(new Request(
++        new URL("/api/auth/sign-in/social", env.BETTER_AUTH_URL),
++        {
++          method: "POST",
++          headers,
++          body: JSON.stringify({
++            provider,
++            callbackURL: handoff.toString(),
++            disableRedirect: true,
++          }),
++        },
++      ));
++      const payload = await response.json() as { url?: string };
++      if (!response.ok || !payload.url) {
++        const name = provider === "github" ? "GitHub" : "Google";
++        return pageResponse(
++          handoffErrorPage({
++            title: "Sign-in couldn't start",
++            lead: `Tui couldn't reach ${name} to begin sign-in.`,
++            steps: [
++              "Try again in a moment — this is usually temporary.",
++              "Still failing? Run <code>gamepigeon auth login</code> to sign in with email and password.",
++            ],
++          }),
++          response.status,
++        );
++      }
++      const responseHeaders = new Headers(response.headers);
++      responseHeaders.delete("content-length");
++      responseHeaders.delete("content-type");
++      responseHeaders.set("location", payload.url);
++      return new Response(null, { status: 302, headers: responseHeaders });
++    }
++
+     if (url.pathname === "/" && request.method === "GET") {
+       return Response.json({
+         service: "tui-gamepigeon-auth",
+@@ -62,4 +207,3 @@ export default {
+     return authCors(request, await createAuth(env).handler(request), env);
+   },
+ } satisfies ExportedHandler<AuthEnv>;
+-
+diff --git a/src/auth-pages.ts b/src/auth-pages.ts
+new file mode 100644
+index 0000000..91d3ebc
+--- /dev/null
++++ b/src/auth-pages.ts
+@@ -0,0 +1,108 @@
++// The pages the browser lands on at the end of a sign-in handoff, served by the
++// localhost listener in `auth.ts`. This is the last thing a user sees before
++// returning to the terminal, so it confirms the outcome instead of leaving a
++// bare sentence on a white page.
++//
++// The same design is rendered by `cloudflare/auth-worker/src/handoff-page.ts`
++// and `tauri/src/main.rs`; the three copies exist because they run in three
++// different runtimes. Keep the copy and palette in sync when changing one.
++
++const STYLE = `
++:root{color-scheme:light}
++*{box-sizing:border-box}
++body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
++background:radial-gradient(900px 500px at 50% -20%,#fff 0%,#eef2f8 60%,#e3eaf4 100%);color:#0f172a;
++font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
++.card{position:relative;overflow:hidden;width:min(100%,420px);padding:34px 28px 30px;text-align:center;
++background:#fff;border:1px solid #e2e8f0;border-radius:16px;
++box-shadow:0 20px 50px rgba(15,23,42,.12),0 8px 20px rgba(15,23,42,.06)}
++.card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;
++background:linear-gradient(90deg,#2955c9 0%,#3772ff 38%,#3bb273 72%,#e6a830 100%)}
++.badge{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0 auto 16px;border-radius:999px}
++.badge svg{width:22px;height:22px}
++[data-tone=ok] .badge{background:rgba(59,178,115,.14);color:#2e8f5c}
++[data-tone=warn] .badge{background:rgba(223,41,53,.12);color:#b81f2a}
++.eyebrow{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2955c9}
++h1{margin:0 0 10px;font-size:23px;line-height:1.25;letter-spacing:-.01em}
++.lead{margin:0;color:#475569}
++.steps{margin:18px 0 0;padding:0;list-style:none;text-align:left;border-top:1px solid #e2e8f0}
++.steps li{position:relative;margin:0;padding:10px 0 0 18px;font-size:13.5px;color:#475569}
++.steps li:first-child{padding-top:14px}
++.steps li::before{content:"";position:absolute;left:2px;top:18px;width:5px;height:5px;border-radius:999px;background:#cbd5e1}
++.steps li:first-child::before{top:22px}
++.hint{margin:16px 0 0;font-size:12.5px;color:#64748b}
++code{font:600 12.5px/1.4 ui-monospace,"SF Mono",Menlo,monospace;background:#f3f6fb;border:1px solid #e2e8f0;border-radius:5px;padding:2px 5px;overflow-wrap:anywhere;-webkit-box-decoration-break:clone;box-decoration-break:clone}
++@media (max-width:400px){.card{padding:28px 20px 24px}h1{font-size:21px}}
++`.trim();
++
++const CHECK_ICON =
++  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
++const ALERT_ICON =
++  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><path d="M12 16.5h.01"/></svg>';
++
++export function escapeHtml(value: string): string {
++  return value.replace(
++    /[&<>"']/g,
++    (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!,
++  );
++}
++
++// `lead` and `steps` are interpolated as trusted HTML so copy can carry <code>
++// spans; the title is escaped. Escape anything request-derived at the call site.
++interface PageOptions {
++  tone: "ok" | "warn";
++  title: string;
++  lead: string;
++  steps?: string[];
++  hint?: string;
++}
++
++/** Renders one self-contained Tui page — no external CSS, fonts, or images. */
++function arcadePage({ tone, title, lead, steps, hint }: PageOptions): string {
++  const list = steps?.length
++    ? `<ul class="steps">${steps.map((step) => `<li>${step}</li>`).join("")}</ul>`
++    : "";
++  return `<!doctype html>
++<html lang="en">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=device-width, initial-scale=1">
++<meta name="robots" content="noindex">
++<title>Tui — ${escapeHtml(title)}</title>
++<style>${STYLE}</style>
++</head>
++<body>
++<main class="card" data-tone="${tone}">
++<span class="badge">${tone === "ok" ? CHECK_ICON : ALERT_ICON}</span>
++<p class="eyebrow">Tui</p>
++<h1>${escapeHtml(title)}</h1>
++<p class="lead">${lead}</p>
++${list}
++${hint ? `<p class="hint">${hint}</p>` : ""}
++</main>
++</body>
++</html>`;
++}
++
++export function signedInPage(): string {
++  return arcadePage({
++    tone: "ok",
++    title: "You're signed in",
++    lead: "Tui has your session. You can close this tab and return to your terminal.",
++    hint: "Your session is saved in <code>~/.tui-gamepigeon/auth.json</code>, so you stay signed in next time.",
++  });
++}
++
++/** `reason` is shown verbatim — pass short, already-escaped copy. */
++export function signInFailedPage(reason: string): string {
++  return arcadePage({
++    tone: "warn",
++    title: "Sign-in didn't finish",
++    lead: reason,
++    steps: [
++      "Return to your terminal and run <code>gamepigeon auth login</code> again.",
++      "If the browser blocked the redirect back, allow pop-ups for the Tui login page.",
++      "Signing in with Google or GitHub? Approve the consent screen rather than closing it.",
++    ],
++  });
++}
+diff --git a/src/auth.ts b/src/auth.ts
+index ef16244..28bdea1 100644
+--- a/src/auth.ts
++++ b/src/auth.ts
+@@ -1,10 +1,22 @@
++import { spawn, spawnSync } from "node:child_process";
++import { createServer } from "node:http";
+ import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+ import { homedir } from "node:os";
+ import { join } from "node:path";
+ import type { AuthMethod } from "./analytics/events.js";
++import { escapeHtml, signedInPage, signInFailedPage } from "./auth-pages.js";
+ import { clearBackendSession, saveBackendSession } from "./sync/config.js";
+ 
++const oauthCallbackPort = 3210;
++const oauthCallbackHost = "127.0.0.1";
++
++function oauthCallbackUrlFor(port: number): string {
++  return `http://${oauthCallbackHost}:${port}/auth/callback`;
++}
+ const defaultAuthBaseUrl = "https://auth.runretroarcade.com";
++const defaultLoginUrl = "https://runretroarcade.com/login";
++const oauthProviders = ["google", "github"] as const;
++type OAuthProvider = (typeof oauthProviders)[number];
+ 
+ interface AuthUser {
+   id: string;
+@@ -37,6 +49,14 @@ function configuredAuthBaseUrl(): string {
+     .replace(/\/$/, "");
+ }
+ 
++function configuredLoginUrl(): string {
++  const url = new URL(process.env.GAMEPIGEON_LOGIN_URL ?? defaultLoginUrl);
++  if (url.protocol !== "http:" && url.protocol !== "https:") {
++    throw new Error("GAMEPIGEON_LOGIN_URL must use HTTP or HTTPS.");
++  }
++  return url.toString();
++}
++
+ function sessionFile(): string {
+   return join(process.env.HOME ?? homedir(), ".tui-gamepigeon", "auth.json");
+ }
+@@ -113,6 +133,212 @@ async function authRequest(
+   };
+ }
+ 
++function isOAuthProvider(value: string | undefined): value is OAuthProvider {
++  return oauthProviders.includes(value as OAuthProvider);
++}
++
++/**
++ * Arc (and Dia, same vendor) send links from other apps into a "Little Arc"
++ * window, which drops the hosted login page's redirect chain — sign-in then
++ * never reaches our callback. Asking Arc for a real tab over AppleScript
++ * bypasses Little Arc. Mirrors `open_in_arc` in `tauri/src/main.rs`.
++ */
++export function arcTabScript(bundleId: string, url: string): string {
++  const escape = (value: string) => value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
++  return `tell application id "${escape(bundleId)}"
++    activate
++    if (count of windows) is 0 then
++        make new window
++    end if
++    tell front window to make new tab with properties {URL:"${escape(url)}"}
++end tell`;
++}
++
++export function isArcBundle(bundleId: string): boolean {
++  const id = bundleId.toLowerCase();
++  return id === "company.thebrowser.browser" || id === "company.thebrowser.dia";
++}
++
++/** The bundle id macOS hands `https` URLs to, or null when it can't be read. */
++function defaultHttpsHandler(): string | null {
++  try {
++    const read = spawnSync("defaults", ["read", "com.apple.LaunchServices/com.apple.launchservices.secure"], {
++      encoding: "utf8",
++    });
++    if (read.status !== 0 || !read.stdout) return null;
++    for (const block of read.stdout.split("{")) {
++      if (!block.includes("LSHandlerURLScheme = https;")) continue;
++      const line = block.split("\n").find((entry) => entry.trim().startsWith("LSHandlerRoleAll = "));
++      const value = line?.trim().slice("LSHandlerRoleAll = ".length).replace(/;$/, "").replace(/"/g, "");
++      if (value) return value;
++    }
++  } catch {
++    /* LaunchServices unreadable: fall through to plain `open` */
++  }
++  return null;
++}
++
++function openBrowser(url: string): void {
++  if (process.platform === "darwin") {
++    const handler = defaultHttpsHandler();
++    if (handler && isArcBundle(handler)) {
++      const arc = spawnSync("osascript", ["-e", arcTabScript(handler, url)], { stdio: "ignore" });
++      if (arc.status === 0) return;
++      // Arc refused the script (not installed where LaunchServices thinks, or
++      // scripting denied): fall back to the ordinary opener below.
++    }
++    // Safari is the last resort: it is always present, so a broken or
++    // missing default handler still gets the user to the login page.
++    const open = spawnSync("open", [url], { stdio: "ignore" });
++    if (open.status === 0) return;
++    spawnSync("open", ["-a", "Safari", url], { stdio: "ignore" });
++    return;
++  }
++  const command = process.platform === "win32" ? "cmd" : "xdg-open";
++  const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
++  const browser = spawn(command, args, { detached: true, stdio: "ignore" });
++  browser.on("error", () => undefined);
++  browser.unref();
++}
++
++/**
++ * Reads one query parameter, tolerating both `&` and `?` separators: some
++ * hosted redirects append `?token` onto a callback that already carried
++ * `?state`, yielding `state=..?token=..`, which `URLSearchParams` would fold
++ * into the state value. Mirrors `query_param` in `tauri/src/main.rs`.
++ */
++function callbackParam(query: string, key: string): string | null {
++  for (const pair of query.split(/[&?]/)) {
++    const separator = pair.indexOf("=");
++    if (separator === -1 || pair.slice(0, separator) !== key) continue;
++    const value = pair.slice(separator + 1).replace(/\+/g, " ");
++    try {
++      return decodeURIComponent(value);
++    } catch {
++      return value;
++    }
++  }
++  return null;
++}
++
++/**
++ * Turns a failed handoff (`?error=...`) into a sentence worth showing. Capped
++ * because it lands in both the browser page and the CLI's error output.
++ */
++function callbackFailure(query: string): string | null {
++  const error = callbackParam(query, "error");
++  if (!error) return null;
++  if (error === "access_denied") return "Sign-in was cancelled before it finished.";
++  const description = callbackParam(query, "error_description");
++  return (description || `The login page reported an error: ${error}`).slice(0, 200);
++}
++
++function receiveOAuthCallback(port = oauthCallbackPort) {
++  let server: ReturnType<typeof createServer> | undefined;
++  let timeout: ReturnType<typeof setTimeout> | undefined;
++  let settled = false;
++  let resolveReady!: () => void;
++  let rejectReady!: (error: Error) => void;
++  const ready = new Promise<void>((resolve, reject) => {
++    resolveReady = resolve;
++    rejectReady = reject;
++  });
++  const close = () => {
++    if (timeout) clearTimeout(timeout);
++    server?.close();
++  };
++  const finish = (onSettle: () => void) => {
++    if (settled) return;
++    settled = true;
++    close();
++    onSettle();
++  };
++  const boundPort = { value: port };
++  const token = new Promise<string>((resolve, reject) => {
++    server = createServer((request, response) => {
++      const target = request.url ?? "/";
++      const separator = target.indexOf("?");
++      const path = separator === -1 ? target : target.slice(0, separator);
++      const query = separator === -1 ? "" : target.slice(separator + 1);
++      if (path === "/auth/ping") {
++        response.writeHead(200, { "content-type": "text/plain; charset=utf-8" }).end("ok");
++        return;
++      }
++      if (path !== "/auth/callback") {
++        response.writeHead(404).end();
++        return;
++      }
++      // The page carries a session token in its URL — keep it out of caches.
++      const page = (status: number, body: string) =>
++        response
++          .writeHead(status, {
++            "content-type": "text/html; charset=utf-8",
++            "cache-control": "no-store",
++            "referrer-policy": "no-referrer",
++          })
++          .end(body);
++
++      const failed = (message: string) => {
++        page(400, signInFailedPage(escapeHtml(message)));
++        finish(() => reject(new Error(message)));
++      };
++
++      const failure = callbackFailure(query);
++      if (failure) {
++        failed(failure);
++        return;
++      }
++      const sessionToken = callbackParam(query, "token");
++      if (!sessionToken) {
++        failed("The login page came back without a session token.");
++        return;
++      }
++      page(200, signedInPage());
++      finish(() => resolve(sessionToken));
++    });
++    let triedFallbackPort = false;
++    const listen = (listenPort: number) => {
++      server?.listen(listenPort, oauthCallbackHost, () => {
++        const address = server?.address();
++        if (address && typeof address === "object") boundPort.value = address.port;
++        resolveReady();
++      });
++    };
++    server.on("error", (error: NodeJS.ErrnoException) => {
++      // The preferred port may be held by a stale listener (e.g. an orphaned
++      // sign-in from a prior run). Fall back to an OS-assigned port rather
++      // than failing outright — the backend only checks the callback
++      // hostname, not the port, so any localhost port is accepted.
++      if (error.code === "EADDRINUSE" && port !== 0 && !triedFallbackPort) {
++        triedFallbackPort = true;
++        listen(0);
++        return;
++      }
++      rejectReady(error);
++      finish(() => reject(error));
++    });
++    listen(port);
++    timeout = setTimeout(
++      () => finish(() => reject(new Error("OAuth sign-in timed out after 5 minutes."))),
++      5 * 60_000,
++    );
++  });
++  void token.catch(() => undefined);
++  return {
++    token,
++    ready,
++    close,
++    get port() {
++      return boundPort.value;
++    },
++  };
++}
++
++/** Starts the localhost OAuth callback listener. Exported for tests. */
++function startOAuthCallbackServer(port = oauthCallbackPort) {
++  return receiveOAuthCallback(port);
++}
++
+ async function ask(label: string, secret = false): Promise<string> {
+   process.stdout.write(label);
+   if (!secret || !process.stdin.isTTY) return (prompt() ?? "").trim();
+@@ -147,7 +373,8 @@ async function resolveUser(sessionToken: string): Promise<AuthUser> {
+   return { id: json.user.id, email: json.user.email };
+ }
+ 
+-export type { AuthUser, StoredSession };
++export type { AuthUser, OAuthProvider, StoredSession };
++export { startOAuthCallbackServer };
+ 
+ export function authConfigured(): boolean {
+   return Boolean(configuredAuthBaseUrl());
+@@ -161,6 +388,74 @@ export function storedUserId(): string | null {
+   return readSession()?.user.id ?? null;
+ }
+ 
++/** Browser OAuth for Google/GitHub. Used by the CLI and the Tui login screen. */
++export async function signInWithOAuth(
++  provider: OAuthProvider,
++  options: { onUrl?: (url: string) => void; signal?: AbortSignal } = {},
++): Promise<AuthUser> {
++  if (!isOAuthProvider(provider)) {
++    throw new Error("usage: gamepigeon auth oauth <google|github>");
++  }
++  if (options.signal?.aborted) {
++    throw new Error("OAuth sign-in cancelled.");
++  }
++  const callback = receiveOAuthCallback();
++  const cancelled = () => new Error("OAuth sign-in cancelled.");
++  const whenAborted = <T>() =>
++    new Promise<T>((_, reject) => {
++      if (!options.signal) return;
++      if (options.signal.aborted) {
++        reject(cancelled());
++        return;
++      }
++      options.signal.addEventListener("abort", () => reject(cancelled()), { once: true });
++    });
++  const onAbort = () => callback.close();
++  options.signal?.addEventListener("abort", onAbort, { once: true });
++  try {
++    await (options.signal
++      ? Promise.race([callback.ready, whenAborted<void>()])
++      : callback.ready);
++    if (options.signal?.aborted) throw cancelled();
++    const start = new URL("/cli/oauth", `${requireAuthBaseUrl()}/`);
++    start.searchParams.set("provider", provider);
++    start.searchParams.set("next", oauthCallbackUrlFor(callback.port));
++    options.onUrl?.(start.toString());
++    openBrowser(start.toString());
++    const sessionToken = options.signal
++      ? await Promise.race([callback.token, whenAborted<string>()])
++      : await callback.token;
++    const user = await resolveUser(sessionToken);
++    saveSession(sessionToken, user);
++    return user;
++  } finally {
++    options.signal?.removeEventListener("abort", onAbort);
++    callback.close();
++  }
++}
++
++/** Opens the shared Tui login page for sign-in, sign-up, or OAuth. */
++export async function signInOnWeb(
++  options: { onUrl?: (url: string) => void } = {},
++): Promise<AuthUser> {
++  const callback = receiveOAuthCallback();
++  try {
++    await callback.ready;
++    const login = new URL(configuredLoginUrl());
++    login.searchParams.set("auth_url", requireAuthBaseUrl());
++    login.searchParams.set("callback", oauthCallbackUrlFor(callback.port));
++    login.searchParams.set("plugin", "1");
++    options.onUrl?.(login.toString());
++    openBrowser(login.toString());
++    const sessionToken = await callback.token;
++    const user = await resolveUser(sessionToken);
++    saveSession(sessionToken, user);
++    return user;
++  } finally {
++    callback.close();
++  }
++}
++
+ /**
+  * Validates a persisted session against the backend, dropping it if it no
+  * longer resolves. Never opens a browser — safe to call from automated paths
+@@ -181,6 +476,14 @@ export async function refreshSessionIfPresent(): Promise<AuthUser | null> {
+   }
+ }
+ 
++export async function ensureSignedIn(): Promise<AuthUser> {
++  const user = await refreshSessionIfPresent();
++  if (user) return user;
++  return signInOnWeb({
++    onUrl: (url) => console.log(`Opening Tui sign-in. If your browser does not open, paste this URL:\n${url}`),
++  });
++}
++
+ export async function signOutLocal(): Promise<void> {
+   const session = readSession();
+   try {
+@@ -206,6 +509,20 @@ export async function runAuthCommand(action?: string): Promise<AuthSuccess | nul
+     return null;
+   }
+ 
++  if (action === "oauth") {
++    const provider = process.argv[4];
++    if (!isOAuthProvider(provider)) {
++      throw new Error("usage: gamepigeon auth oauth <google|github>");
++    }
++    const user = await signInWithOAuth(provider, {
++      onUrl: (url) => {
++        console.log(`Opening ${provider} sign-in. If your browser does not open, paste this URL:\n${url}`);
++      },
++    });
++    console.log(`Signed in as ${user.email}`);
++    return { kind: "signed_in", method: provider, userId: user.id };
++  }
++
+   const email = await ask("Email: ");
+   const password = await ask("Password: ", true);
+ 
+@@ -246,6 +563,5 @@ export async function runAuthCommand(action?: string): Promise<AuthSuccess | nul
+     return { kind: "signed_up", method: "password", userId: user.id };
+   }
+ 
+-  throw new Error("usage: gamepigeon auth [signup|login|status|logout]");
++  throw new Error("usage: gamepigeon auth [signup|login|oauth|status|logout]");
+ }
+-
+diff --git a/src/index.ts b/src/index.ts
+index dc864a4..976c865 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -18,7 +18,8 @@ function captureAuthSuccess(result: AuthSuccess): void {
+ function printUsage(): void {
+   const ids = REGISTRY.filter(isPlayable).map((entry) => entry.id).join(", ");
+   console.log("usage: gamepigeon [game]");
+-  console.log("       gamepigeon auth [signup|login|status|logout]");
++  console.log("       gamepigeon auth [signup|login|oauth|status|logout]");
++  console.log("       gamepigeon auth oauth <google|github>");
+   console.log("       gamepigeon install [--codex|--claude|--opencode|--hermes|--openclaw|--antigravity|--all]");
+   console.log("       gamepigeon export [--input <file-or-directory>]... [--output <directory>] [--include-noops]");
+   console.log("");

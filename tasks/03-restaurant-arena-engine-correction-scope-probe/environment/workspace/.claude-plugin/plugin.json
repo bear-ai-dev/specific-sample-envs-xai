@@ -1,0 +1,10 @@
+{
+  "name": "tui-gamepigeon",
+  "version": "0.3.4",
+  "description": "Play in a lightweight HTML overlay while Claude Code works.",
+  "author": {
+    "name": "Trolleroof"
+  },
+  "repository": "https://github.com/Trolleroof/tui-gamepigeon",
+  "license": "MIT"
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-06",
+  "task": "01-overlay-shell-ui-session-pause-window-lifecycle",
+  "trial_number": 6,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-cf47cf234995",
+  "configuration": "opus-5-claude-code",
+  "model": "bedrock/us.anthropic.claude-opus-5",
+  "model_label": "Opus 5",
+  "route": "us.anthropic.claude-opus-5",
+  "provider": "Amazon Bedrock",
+  "harness": "Claude Code",
+  "agent_version": "2.1.258",
+  "reasoning_effort": "high",
+  "max_output_tokens": 128000,
+  "status": "complete",
+  "reward": 0,
+  "solved": false,
+  "source_trial": "forge-tui-gamepigeon-overlay-she__ddrq54m",
+  "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__ddrq54m",
+  "metrics": {
+    "wall_clock_seconds": 1922,
+    "output_tokens": 111152,
+    "step_count": 163
+  },
+  "trajectory": {
+    "path": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-06.json",
+    "sha256": "e166cd83af560661bc3c368d6323122c5681424dfe69aeed26897a9c112b2107",
+    "redacted": true
+  }
+}

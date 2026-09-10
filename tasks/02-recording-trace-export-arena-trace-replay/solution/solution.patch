@@ -1,0 +1,826 @@
+diff --git a/scripts/export-arena-trace.ts b/scripts/export-arena-trace.ts
+new file mode 100644
+index 0000000..5ee93f1
+--- /dev/null
++++ b/scripts/export-arena-trace.ts
+@@ -0,0 +1,118 @@
++/**
++ * Export the reference Restaurant Arena trace fixture for `retro-backend`.
++ *
++ * The fixture is a complete dinner-rush shift on a fixed seed, played through
++ * the same deterministic path the demo takes: the tick-8 allergy incident, the
++ * player's safety correction, the tick-15 warming-shelf scope probe, and the
++ * outcome. "Smallest valid" here means the smallest run that still *succeeds* —
++ * a trace missing the correction chain or the probe has nothing for a grader
++ * to grade, so a trimmed event list would be a failing fixture, not a small one.
++ *
++ *   bun scripts/export-arena-trace.ts            # writes the fixture
++ *   bun scripts/export-arena-trace.ts --check    # verifies without writing
++ */
++
++import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
++import { dirname, join } from "node:path";
++import { RestaurantGame } from "../src/games/restaurant-arena/restaurant-game.js";
++import {
++  exportTraceJson,
++  summarizeTraceFailures,
++  validateArenaTraceV3,
++  type RestaurantArenaTraceV3,
++} from "../src/games/restaurant-arena/trace.js";
++
++/** The seed the demo and the benchmark both run. */
++export const FIXTURE_SEED = 218220;
++export const FIXTURE_EPISODE_ID = "dinner-rush-benchmark-218220";
++
++const REPO_ROOT = join(import.meta.dir, "..");
++export const FIXTURE_PATH = join(REPO_ROOT, "contracts/fixtures/restaurant-arena-trace-v3.json");
++
++/**
++ * Wall clock the fixture's timestamps are pinned to.
++ *
++ * A live run stamps events from `Date.now()`, which would make every export a
++ * diff. The fixture is a synthetic artefact checked into the repo, so its
++ * clock is fixed here and its timestamps keep only the spacing the tick clock
++ * gave them. Nothing else is rewritten: state hashes never covered timestamps.
++ */
++const FIXTURE_EPOCH_MS = Date.parse("2026-09-05T18:00:00.000Z");
++const MS_PER_TICK = 3000;
++
++/**
++ * Play the fixed-seed shift end to end. Deterministic: same seed, same input
++ * sequence, same events, same timestamps — so re-running this produces a
++ * byte-identical trace, and `--check` can tell a stale fixture from a current one.
++ */
++export function buildFixtureTrace(): RestaurantArenaTraceV3 {
++  const game = new RestaurantGame(FIXTURE_SEED);
++  game.step("sim_start");
++
++  // Up to the tick-8 oven failure under the peanut-allergy ticket.
++  for (let tick = 0; tick < 10; tick += 1) game.step("tick");
++
++  // The player's safety correction, the decision the probe later tests.
++  game.step("verify_substitution");
++
++  // Through the tick-15 warming-shelf probe and on to the end of the shift.
++  for (let tick = 0; tick < 20 && !game.isOver(); tick += 1) game.step("tick");
++
++  const trace = game.captureTrace({
++    episodeId: FIXTURE_EPISODE_ID,
++    runKind: "benchmark",
++    deletion: { requestId: null, status: "retained" },
++  });
++
++  return {
++    ...trace,
++    events: trace.events.map((event) => ({
++      ...event,
++      timestamp: new Date(FIXTURE_EPOCH_MS + event.tick * MS_PER_TICK).toISOString(),
++    })),
++  };
++}
++
++function main(): void {
++  const checkOnly = process.argv.includes("--check");
++  const trace = buildFixtureTrace();
++
++  const validation = validateArenaTraceV3(trace);
++  if (!validation.valid) {
++    console.error("Refusing to export: trace does not validate against restaurant-arena-trace-v3.");
++    for (const error of validation.errors) console.error(`  - ${error}`);
++    process.exit(1);
++  }
++
++  const json = `${exportTraceJson(trace)}\n`;
++
++  if (checkOnly) {
++    let onDisk: string;
++    try {
++      onDisk = readFileSync(FIXTURE_PATH, "utf8");
++    } catch {
++      console.error(`Fixture missing: ${FIXTURE_PATH}. Run: bun scripts/export-arena-trace.ts`);
++      process.exit(1);
++    }
++    if (onDisk !== json) {
++      console.error("Fixture is stale. Run: bun scripts/export-arena-trace.ts");
++      process.exit(1);
++    }
++    console.log(`Fixture is current (${trace.events.length} events).`);
++    return;
++  }
++
++  mkdirSync(dirname(FIXTURE_PATH), { recursive: true });
++  writeFileSync(FIXTURE_PATH, json, "utf8");
++
++  const failures = summarizeTraceFailures(trace);
++  console.log(`Wrote ${FIXTURE_PATH}`);
++  console.log(`  runKind:  ${trace.runKind}`);
++  console.log(`  seed:     ${trace.seed}`);
++  console.log(`  events:   ${trace.events.length}`);
++  console.log(`  failures: ${failures.total}${
++    failures.total > 0 ? ` (${JSON.stringify(failures.byCode)})` : ""
++  }`);
++}
++
++if (import.meta.main) main();
+diff --git a/scripts/replay-arena-trace.ts b/scripts/replay-arena-trace.ts
+new file mode 100644
+index 0000000..4baa0a8
+--- /dev/null
++++ b/scripts/replay-arena-trace.ts
+@@ -0,0 +1,18 @@
++import { readFileSync } from "node:fs";
++import { replayArenaTrace } from "../src/games/restaurant-arena/replay.js";
++import type { RestaurantArenaTraceV3 } from "../src/games/restaurant-arena/trace.js";
++
++export function readArenaTrace(path: string): RestaurantArenaTraceV3 {
++  const text = readFileSync(path, "utf8");
++  if (!path.endsWith(".jsonl")) return JSON.parse(text);
++  const [header, ...events] = text.trim().split("\n").map((line) => JSON.parse(line));
++  return { ...header, events };
++}
++
++if (import.meta.main) {
++  const path = process.argv[2];
++  if (!path) throw new Error("Usage: bun scripts/replay-arena-trace.ts <trace.json|trace.jsonl>");
++  const trace = readArenaTrace(path);
++  const game = replayArenaTrace(trace);
++  console.log(`Native replay passed: ${trace.replay.inputs.length} inputs, tick ${game.state().episode.tick}, ${trace.terminal.status}, ${trace.replay.finalStateHash}`);
++}
+diff --git a/src/games/restaurant-arena/replay.ts b/src/games/restaurant-arena/replay.ts
+new file mode 100644
+index 0000000..66a787f
+--- /dev/null
++++ b/src/games/restaurant-arena/replay.ts
+@@ -0,0 +1,93 @@
++import { RestaurantGame, type ArenaInputRecord } from "./restaurant-game.js";
++import { ARENA_ENV_VERSION, computeStateHash, validateArenaTraceV3, type RestaurantArenaTraceV3 } from "./trace.js";
++import type { RestaurantState, Role } from "./types.js";
++
++/** Normalize legacy worker role and ID (expediter -> supply_lead) for initial-state comparison. */
++export function normalizeLegacyInitialState(state: Record<string, unknown>): Record<string, unknown> {
++  const workers = Array.isArray(state.workers)
++    ? state.workers.map((w: any) => {
++        const isLegacyRole = w?.role === "expediter";
++        const isLegacyId = w?.id === "worker-expediter";
++        if (isLegacyRole || isLegacyId) {
++          return {
++            ...w,
++            id: isLegacyId ? "worker-supply_lead" : w.id,
++            role: isLegacyRole ? "supply_lead" : w.role,
++          };
++        }
++        return w;
++      })
++    : state.workers;
++  return { ...state, workers };
++}
++
++function toLegacyWorkerRepresentation(obj: unknown): unknown {
++  if (obj === null || obj === undefined || typeof obj !== "object") return obj;
++  if (Array.isArray(obj)) return obj.map(toLegacyWorkerRepresentation);
++  const record = obj as Record<string, unknown>;
++  const res: Record<string, unknown> = {};
++  for (const [k, v] of Object.entries(record)) {
++    if (k === "workers" && Array.isArray(v)) {
++      res[k] = v.map((w: Record<string, unknown>) => {
++        if (w.role === "supply_lead" || w.id === "worker-supply_lead") {
++          return {
++            ...w,
++            id: w.id === "worker-supply_lead" ? "worker-expediter" : w.id,
++            role: w.role === "supply_lead" ? "expediter" : w.role,
++          };
++        }
++        return w;
++      });
++    } else {
++      res[k] = toLegacyWorkerRepresentation(v);
++    }
++  }
++  return res;
++}
++
++/** Native replay from input zero; never apply the derived event diary as actions. */
++export function replayArenaTrace(trace: RestaurantArenaTraceV3): RestaurantGame {
++  const validation = validateArenaTraceV3(trace);
++  if (!validation.valid) throw new Error(validation.errors.join("\n"));
++  if (trace.envVersion !== ARENA_ENV_VERSION) throw new Error("Arena environment version does not match this build");
++  const game = new RestaurantGame(trace.seed, trace.replay.variation);
++  const engineInitialHash = computeStateHash(normalizeLegacyInitialState(game.getInitialState()));
++  const traceInitialHash = computeStateHash(normalizeLegacyInitialState(trace.initialState));
++  if (engineInitialHash !== traceInitialHash) throw new Error("Initial state differs from this engine");
++  for (const [index, input] of trace.replay.inputs.entries()) {
++    applyArenaReplayInput(game, input, index);
++  }
++  const currentFinalHash = computeStateHash(game.checkpointState());
++  if (currentFinalHash !== trace.replay.finalStateHash) {
++    if (computeStateHash(toLegacyWorkerRepresentation(game.checkpointState())) !== trace.replay.finalStateHash) {
++      throw new Error("Final checkpoint mismatch");
++    }
++  }
++  if (trace.terminal.status === "abandoned") game.markAbandoned(trace.terminal.reason ?? "abandoned");
++  if (JSON.stringify(game.getTerminalStatus()) !== JSON.stringify(trace.terminal)) throw new Error("Terminal status mismatch");
++  return game;
++}
++
++export function applyArenaReplayInput(game: RestaurantGame, input: ArenaInputRecord, index: number): void {
++    if (game.state().episode.tick !== input.tick) throw new Error(`Input ${index}: tick mismatch`);
++    switch (input.kind) {
++      case "step":
++        if (!game.actions.includes(input.action)) throw new Error(`Input ${index}: unknown game action`);
++        game.step(input.action); break;
++      case "time": game.advanceTime(); break;
++      case "envelope": game.stepEnvelope(input.envelope, input.telemetry); break;
++      case "controllers": game.setExternalControllers(input.roles); break;
++      default: throw new Error(`Input ${index}: unknown input kind`);
++    }
++    const currentCheckpointHash = computeStateHash(game.checkpointState());
++    if (currentCheckpointHash !== input.stateHash) {
++      if (computeStateHash(toLegacyWorkerRepresentation(game.checkpointState())) !== input.stateHash) {
++        throw new Error(`Input ${index}: checkpoint mismatch`);
++      }
++    }
++    if (input.restaurantStateHash !== undefined && computeStateHash(game.state()) !== input.restaurantStateHash) {
++      if (computeStateHash(toLegacyWorkerRepresentation(game.state())) !== input.restaurantStateHash) {
++        throw new Error(`Input ${index}: RestaurantState checkpoint mismatch`);
++      }
++    }
++}
+diff --git a/src/games/restaurant-arena/restaurant-game.ts b/src/games/restaurant-arena/restaurant-game.ts
+index ffcfbfc..8a24465 100644
+--- a/src/games/restaurant-arena/restaurant-game.ts
++++ b/src/games/restaurant-arena/restaurant-game.ts
+@@ -74,7 +74,10 @@ import {
+   type ProbeReport,
+ } from "./scope-probe.js";
+ import {
++  captureArenaTrace,
+   computeStateHash,
++  type RestaurantArenaTraceV3,
++  type TraceCaptureOptions,
+   type TraceV3Event,
+   type TraceV3Model,
+   type TraceV3ToolResult,
+@@ -923,6 +926,10 @@ export class RestaurantGame implements PlayableGame {
+     return buildArenaTimeline(this);
+   }
+ 
++  captureTrace(options: TraceCaptureOptions): RestaurantArenaTraceV3 {
++    return captureArenaTrace(this, options);
++  }
++
+   private debrief(): Debrief {
+     const out = this.currentState.outcomes;
+     const safeRate = out.completed > 0 ? out.safeOrders / out.completed : 1;
+diff --git a/src/games/restaurant-arena/trace.ts b/src/games/restaurant-arena/trace.ts
+index 0ca8adc..eb2ce57 100644
+--- a/src/games/restaurant-arena/trace.ts
++++ b/src/games/restaurant-arena/trace.ts
+@@ -1,9 +1,19 @@
+ /**
+- * Restaurant Arena event/state hashing primitives and shared trace types.
++ * Restaurant Arena Structured Trace Capture & Exporter (restaurant-arena-trace/v3).
++ * Strictly aligns with contracts/restaurant-arena-trace-v3.schema.json.
+  */
+ 
+-import type { ArenaInputRecord } from "./restaurant-game.js";
+-import type { Role } from "./types.js";
++import { SHIFT_PRESETS } from "./arena-view.js";
++import type { ArenaInputRecord, RestaurantGame } from "./restaurant-game.js";
++import { roundForTick } from "./rounds.js";
++import {
++  isRestaurantState,
++  isActionEnvelope,
++  type Outcomes,
++  type Priority,
++  type RestaurantState,
++  type Role,
++} from "./types.js";
+ 
+ export const TRACE_V3_VERSION = "restaurant-arena-trace/v3" as const;
+ export const TRACE_V3_CONTRACT_VERSION = "restaurant-arena/v1" as const;
+@@ -139,6 +149,28 @@ export interface RestaurantArenaTraceV3 {
+   terminal: { status: "active" | "completed" | "abandoned"; tick: number; reason: string | null };
+ }
+ 
++export interface TraceCaptureOptions {
++  episodeId?: string;
++  /**
++   * The run's own identifier, carried through to the export so a receipt can
++   * be matched back to the session that produced it. Omitted by callers that
++   * have no session to name -- a script building a fixture, for instance.
++   */
++  sessionId?: string;
++  /**
++   * Which kind of run this is. Required: defaulting it would file a benchmark
++   * episode as live gameplay, and the three must stay distinguishable.
++   */
++  runKind: "live" | "synthetic" | "benchmark";
++  envVersion?: string;
++  startTime?: string;
++  /** Recorded, never inferred: a caller that omits it gets `retained` with no request id. */
++  deletion?: Partial<TraceV3Deletion>;
++  /** Omit to capture the run's own journal; pass to replace it wholesale. */
++  events?: TraceV3Event[];
++  additionalEvents?: TraceV3Event[];
++}
++
+ /**
+  * Pure, deterministic SHA-256 implementation (FIPS 180-4).
+  * Runs synchronously in any JavaScript runtime (Node, Bun, browser) without external dependencies.
+@@ -267,3 +299,496 @@ export function computeStateHash(data: unknown): string {
+   return sha256Bytes(new TextEncoder().encode(json));
+ }
+ 
++const ARENA_ID_REGEX = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
++const IDEMPOTENCY_KEY_REGEX = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,129}$/;
++const STATE_HASH_REGEX = /^sha256:[0-9a-f]{64}$/;
++
++export interface ValidationResult {
++  valid: boolean;
++  errors: string[];
++}
++
++/**
++ * Lightweight runtime checks. Full JSON Schema validation (including nested state)
++ * is performed by scripts/validate-arena-trace.py against `contracts/restaurant-arena-trace-v3.schema.json`.
++ */
++export function validateArenaTraceV3(data: unknown): ValidationResult {
++  const errors: string[] = [];
++  if (typeof data !== "object" || data === null || Array.isArray(data)) {
++    return { valid: false, errors: ["Trace must be a non-null object"] };
++  }
++
++  const root = data as Record<string, unknown>;
++  const allowedRootKeys = new Set([
++    "version",
++    "episodeId",
++    "sessionId",
++    "seed",
++    "envVersion",
++    "contractVersion",
++    "runKind",
++    "initialState",
++    "events",
++    "deletion",
++    "replay",
++    "terminal",
++  ]);
++
++  for (const key of Object.keys(root)) {
++    if (!allowedRootKeys.has(key)) {
++      errors.push(`Disallowed root property: ${key}`);
++    }
++  }
++
++  if (root.version !== TRACE_V3_VERSION) {
++    errors.push(`version must be exactly '${TRACE_V3_VERSION}', got '${String(root.version)}'`);
++  }
++
++  if (typeof root.episodeId !== "string" || !ARENA_ID_REGEX.test(root.episodeId)) {
++    errors.push(`episodeId must be a valid arenaId matching ${ARENA_ID_REGEX}, got '${String(root.episodeId)}'`);
++  }
++
++  // Absent is valid -- exports written before sessions were identifiable are
++  // still well-formed traces. Present but malformed is not: a session id that
++  // cannot be matched is worse than none, because it looks like it can.
++  if (root.sessionId !== undefined && (typeof root.sessionId !== "string" || !ARENA_ID_REGEX.test(root.sessionId))) {
++    errors.push(`sessionId must be a valid arenaId matching ${ARENA_ID_REGEX}, got '${String(root.sessionId)}'`);
++  }
++
++  if (typeof root.seed !== "number" || !Number.isInteger(root.seed) || root.seed < 0) {
++    errors.push(`seed must be a non-negative integer, got '${String(root.seed)}'`);
++  }
++
++  if (typeof root.envVersion !== "string" || root.envVersion.length < 1) {
++    errors.push(`envVersion must be a non-empty string`);
++  }
++
++  if (root.contractVersion !== TRACE_V3_CONTRACT_VERSION) {
++    errors.push(`contractVersion must be '${TRACE_V3_CONTRACT_VERSION}'`);
++  }
++
++  const validRunKinds = new Set(["live", "synthetic", "benchmark"]);
++  if (typeof root.runKind !== "string" || !validRunKinds.has(root.runKind)) {
++    errors.push(`runKind must be one of ['live', 'synthetic', 'benchmark']`);
++  }
++
++  // Replay state, not an optional extra: a trace that cannot be replayed
++  // cannot be re-graded, which is the whole point of capturing one.
++  if (typeof root.initialState !== "object" || root.initialState === null || Array.isArray(root.initialState)) {
++    errors.push(`initialState must be an object holding the tick-0 state`);
++  } else {
++    const initial = root.initialState as Record<string, unknown>;
++    if (!isRestaurantState(initial)) errors.push("initialState must be a restaurant-arena/v1 state");
++    if (initial.seed !== root.seed) {
++      errors.push(`initialState.seed must equal the trace seed (${String(root.seed)})`);
++    }
++    const episode = initial.episode as { tick?: unknown } | undefined;
++    if (!episode || episode.tick !== 0) {
++      errors.push(`initialState.episode.tick must be 0: the snapshot is the world before the run`);
++    }
++  }
++
++  const replay = root.replay as RestaurantArenaTraceV3["replay"] | undefined;
++  if (!replay || typeof replay.variation !== "string" || !Array.isArray(replay.inputs) || !STATE_HASH_REGEX.test(replay.finalStateHash)) {
++    errors.push("replay requires variation, ordered inputs and finalStateHash");
++  } else {
++    if (replay.finalRestaurantStateHash !== undefined &&
++      (typeof replay.finalRestaurantStateHash !== "string" || !STATE_HASH_REGEX.test(replay.finalRestaurantStateHash))) {
++      errors.push("replay.finalRestaurantStateHash must be a sha256 hash when present");
++    }
++    if (!Object.hasOwn(SHIFT_PRESETS, replay.variation)) {
++      errors.push("replay.variation must be a known Arena variation");
++    }
++    for (const [index, input] of replay.inputs.entries()) {
++      const value = input as Record<string, unknown> | null;
++      const kind = value && typeof value === "object" && !Array.isArray(value) ? value.kind : undefined;
++      const commonValid =
++        value !== null && typeof value === "object" && !Array.isArray(value) &&
++        Number.isInteger(value.tick) && (value.tick as number) >= 0 &&
++        typeof value.stateHash === "string" && STATE_HASH_REGEX.test(value.stateHash) &&
++        (value.restaurantStateHash === undefined ||
++          (typeof value.restaurantStateHash === "string" && STATE_HASH_REGEX.test(value.restaurantStateHash)));
++      const payloadValid =
++        kind === "step" && typeof value?.action === "string" && value.action.length > 0 ||
++        kind === "time" && value && !("action" in value) && !("envelope" in value) && !("roles" in value) ||
++        kind === "envelope" && !!value && isActionEnvelope(value.envelope) && (value.telemetry === undefined || (typeof value.telemetry === "object" && value.telemetry !== null && !Array.isArray(value.telemetry))) ||
++        kind === "controllers" && !!value && Array.isArray(value.roles) && new Set(value.roles).size === value.roles.length && value.roles.every((role) => ["chef", "server", "host", "supply_lead", "expediter"].includes(role as string));
++      if (!commonValid || !payloadValid) {
++        errors.push(`replay.inputs[${index}] is invalid`);
++      }
++    }
++  }
++  const terminal = root.terminal as RestaurantArenaTraceV3["terminal"] | undefined;
++  if (!terminal || !["active", "completed", "abandoned"].includes(terminal.status) || !Number.isInteger(terminal.tick) || terminal.tick < 0 || (terminal.reason !== null && typeof terminal.reason !== "string")) {
++    errors.push("terminal requires status, tick and reason");
++  }
++
++  // deletion
++  if (typeof root.deletion !== "object" || root.deletion === null) {
++    errors.push(`deletion must be an object`);
++  } else {
++    const deletion = root.deletion as Record<string, unknown>;
++    const allowedDeletionKeys = new Set(["requestId", "status"]);
++    for (const k of Object.keys(deletion)) {
++      if (!allowedDeletionKeys.has(k)) errors.push(`Disallowed deletion property: ${k}`);
++    }
++    if (deletion.requestId !== null && (typeof deletion.requestId !== "string" || !ARENA_ID_REGEX.test(deletion.requestId))) {
++      errors.push(`deletion.requestId must be an arenaId or null`);
++    }
++    const validDeletionStatuses = new Set(["retained", "requested", "deleted"]);
++    if (!validDeletionStatuses.has(deletion.status as string)) {
++      errors.push(`deletion.status must be 'retained', 'requested', or 'deleted'`);
++    }
++  }
++
++  // events
++  if (!Array.isArray(root.events)) {
++    errors.push(`events must be an array`);
++  } else {
++    const validEventKinds = new Set<string>([
++      "observation",
++      "action",
++      "player_correction",
++      "message",
++      "outcome",
++      "inspection",
++      "hold",
++      "hold_cleared",
++      "verification_request",
++      "verification_response",
++      "escalation",
++      "handoff",
++      "supply_order",
++      "supply_delivered",
++      "stockout",
++    ]);
++
++    const validRoles = new Set<string>(["chef", "server", "host", "supply_lead", "expediter"]);
++    const validCategories = new Set<string | null>(["safety", "priority", "quality", "pace", null]);
++    const validSubjectKinds = new Set<string>(["order", "ingredient", "equipment", "handoff"]);
++
++    const allowedEventKeys = new Set([
++      "tick",
++      "round",
++      "kind",
++      "timestamp",
++      "actorId",
++      "role",
++      "targetRole",
++      "checkpointId",
++      "stateHash",
++      "model",
++      "requestId",
++      "idempotencyKey",
++      "text",
++      "observation",
++      "action",
++      "toolResult",
++      "outcome",
++      "correctionRationale",
++      "correctionCategory",
++      "changedDecisionEventId",
++      "probeEventId",
++      "subject",
++      "payload",
++    ]);
++
++    root.events.forEach((ev, idx) => {
++      if (typeof ev !== "object" || ev === null) {
++        errors.push(`events[${idx}] must be a non-null object`);
++        return;
++      }
++      const e = ev as Record<string, unknown>;
++
++      for (const k of Object.keys(e)) {
++        if (!allowedEventKeys.has(k)) errors.push(`events[${idx}] has disallowed property: ${k}`);
++      }
++
++      if (typeof e.tick !== "number" || !Number.isInteger(e.tick) || e.tick < 0) {
++        errors.push(`events[${idx}].tick must be a non-negative integer`);
++      }
++      if (e.round !== undefined && (typeof e.round !== "number" || !Number.isInteger(e.round) || e.round < 1)) {
++        errors.push(`events[${idx}].round must be a positive integer`);
++      }
++      if (typeof e.kind !== "string" || !validEventKinds.has(e.kind)) {
++        errors.push(`events[${idx}].kind must be a valid kind, got '${String(e.kind)}'`);
++      }
++      if (typeof e.timestamp !== "string" || Number.isNaN(Date.parse(e.timestamp))) {
++        errors.push(`events[${idx}].timestamp must be an ISO 8601 date-time string`);
++      }
++      if (typeof e.stateHash !== "string" || !STATE_HASH_REGEX.test(e.stateHash)) {
++        errors.push(`events[${idx}].stateHash must match ^sha256:[0-9a-f]{64}$, got '${String(e.stateHash)}'`);
++      }
++
++      if (e.actorId !== undefined && (typeof e.actorId !== "string" || !ARENA_ID_REGEX.test(e.actorId))) {
++        errors.push(`events[${idx}].actorId must match arenaId`);
++      }
++      if (e.role !== undefined && (typeof e.role !== "string" || !validRoles.has(e.role))) {
++        errors.push(`events[${idx}].role must be one of ['chef', 'server', 'host', 'supply_lead', 'expediter']`);
++      }
++      if (e.targetRole !== undefined && (typeof e.targetRole !== "string" || !validRoles.has(e.targetRole))) {
++        errors.push(`events[${idx}].targetRole must be one of ['chef', 'server', 'host', 'supply_lead', 'expediter']`);
++      }
++      if (e.checkpointId !== undefined && (typeof e.checkpointId !== "string" || !ARENA_ID_REGEX.test(e.checkpointId))) {
++        errors.push(`events[${idx}].checkpointId must match arenaId`);
++      }
++      if (e.requestId !== undefined && (typeof e.requestId !== "string" || !ARENA_ID_REGEX.test(e.requestId))) {
++        errors.push(`events[${idx}].requestId must match arenaId`);
++      }
++      if (e.idempotencyKey !== undefined && (typeof e.idempotencyKey !== "string" || !IDEMPOTENCY_KEY_REGEX.test(e.idempotencyKey))) {
++        errors.push(`events[${idx}].idempotencyKey must match ^[A-Za-z0-9][A-Za-z0-9._:-]{0,129}$`);
++      }
++      if (e.correctionCategory !== undefined && (e.correctionCategory !== null && !validCategories.has(e.correctionCategory as string))) {
++        errors.push(`events[${idx}].correctionCategory must be one of ['safety', 'priority', 'quality', 'pace', null]`);
++      }
++      if (e.changedDecisionEventId !== undefined && e.changedDecisionEventId !== null && (typeof e.changedDecisionEventId !== "string" || !ARENA_ID_REGEX.test(e.changedDecisionEventId))) {
++        errors.push(`events[${idx}].changedDecisionEventId must be arenaId or null`);
++      }
++      if (e.probeEventId !== undefined && e.probeEventId !== null && (typeof e.probeEventId !== "string" || !ARENA_ID_REGEX.test(e.probeEventId))) {
++        errors.push(`events[${idx}].probeEventId must be arenaId or null`);
++      }
++      if (e.text !== undefined && e.text !== null && typeof e.text !== "string") {
++        errors.push(`events[${idx}].text must be a string or null`);
++      }
++      if (e.correctionRationale !== undefined && e.correctionRationale !== null && typeof e.correctionRationale !== "string") {
++        errors.push(`events[${idx}].correctionRationale must be a string or null`);
++      }
++      if (e.observation !== undefined && e.observation !== null && (typeof e.observation !== "object" || Array.isArray(e.observation))) {
++        errors.push(`events[${idx}].observation must be an object or null`);
++      }
++      if (e.action !== undefined && e.action !== null && (typeof e.action !== "object" || Array.isArray(e.action))) {
++        errors.push(`events[${idx}].action must be an object or null`);
++      }
++      if (e.toolResult !== undefined && e.toolResult !== null) {
++        if (typeof e.toolResult !== "object" || Array.isArray(e.toolResult)) {
++          errors.push(`events[${idx}].toolResult must be an object or null`);
++        } else {
++          // The three reserved keys a grader sorts on. Domain keys alongside
++          // them are deliberately unconstrained.
++          const tr = e.toolResult as Record<string, unknown>;
++          if (tr.ok !== undefined && typeof tr.ok !== "boolean") {
++            errors.push(`events[${idx}].toolResult.ok must be a boolean`);
++          }
++          if (
++            tr.latencyMs !== undefined &&
++            (typeof tr.latencyMs !== "number" || !Number.isFinite(tr.latencyMs) || tr.latencyMs < 0)
++          ) {
++            errors.push(`events[${idx}].toolResult.latencyMs must be a number >= 0`);
++          }
++          for (const key of ["queueMs", "providerMs", "roundMs", "inputTokens", "outputTokens", "cachedInputTokens"] as const) {
++            const value = tr[key];
++            if (value !== undefined && (typeof value !== "number" || !Number.isFinite(value) || value < 0)) {
++              errors.push(`events[${idx}].toolResult.${key} must be a number >= 0`);
++            }
++          }
++          if (tr.finishReason !== undefined && (typeof tr.finishReason !== "string" || tr.finishReason.length === 0)) {
++            errors.push(`events[${idx}].toolResult.finishReason must be a non-empty string`);
++          }
++          const hasError = tr.error !== undefined && tr.error !== null;
++          if (hasError) {
++            if (typeof tr.error !== "object" || Array.isArray(tr.error)) {
++              errors.push(`events[${idx}].toolResult.error must be an object or null`);
++            } else {
++              const err = tr.error as Record<string, unknown>;
++              if (typeof err.code !== "string" || err.code.length === 0) {
++                errors.push(`events[${idx}].toolResult.error.code must be a non-empty string`);
++              }
++              if (typeof err.message !== "string" || err.message.length === 0) {
++                errors.push(`events[${idx}].toolResult.error.message must be a non-empty string`);
++              }
++              if (err.retryable !== undefined && typeof err.retryable !== "boolean") {
++                errors.push(`events[${idx}].toolResult.error.retryable must be a boolean`);
++              }
++            }
++          }
++
++          // `ok` and `error` are one fact stated twice, so they must agree.
++          // A failure without an error body loses the code a grader sorts on,
++          // and a success carrying one is counted as a failure by whichever
++          // consumer filters on error presence instead of on `ok`.
++          if (tr.ok === false && !hasError) {
++            errors.push(`events[${idx}].toolResult.ok is false but no error body is present`);
++          }
++          if (tr.ok !== false && hasError) {
++            errors.push(
++              `events[${idx}].toolResult carries an error body but ok is ${
++                tr.ok === undefined ? "absent" : "true"
++              }; a failed call must set ok to false`,
++            );
++          }
++        }
++      }
++      if (e.outcome !== undefined && e.outcome !== null && (typeof e.outcome !== "object" || Array.isArray(e.outcome))) {
++        errors.push(`events[${idx}].outcome must be an object or null`);
++      }
++      if (e.payload !== undefined && e.payload !== null && (typeof e.payload !== "object" || Array.isArray(e.payload))) {
++        errors.push(`events[${idx}].payload must be an object or null`);
++      }
++      if (e.model !== undefined) {
++        if (typeof e.model !== "object" || e.model === null || Array.isArray(e.model)) {
++          errors.push(`events[${idx}].model must be an object`);
++        } else {
++          const mod = e.model as Record<string, unknown>;
++          const allowedModelKeys = new Set(["provider", "name", "version"]);
++          for (const mk of Object.keys(mod)) {
++            if (!allowedModelKeys.has(mk)) {
++              errors.push(`events[${idx}].model has disallowed property: ${mk}`);
++            }
++          }
++          if (typeof mod.provider !== "string" || mod.provider.length === 0) {
++            errors.push(`events[${idx}].model.provider must be a non-empty string`);
++          }
++          if (typeof mod.name !== "string" || mod.name.length === 0) {
++            errors.push(`events[${idx}].model.name must be a non-empty string`);
++          }
++          if (mod.version !== undefined && (typeof mod.version !== "string" || mod.version.length === 0)) {
++            errors.push(`events[${idx}].model.version must be a non-empty string if provided`);
++          }
++        }
++      }
++      if (e.subject !== undefined) {
++        if (typeof e.subject !== "object" || e.subject === null || Array.isArray(e.subject)) {
++          errors.push(`events[${idx}].subject must be an object`);
++        } else {
++          const sub = e.subject as Record<string, unknown>;
++          const allowedSubKeys = new Set(["kind", "id"]);
++          for (const sk of Object.keys(sub)) {
++            if (!allowedSubKeys.has(sk)) {
++              errors.push(`events[${idx}].subject has disallowed property: ${sk}`);
++            }
++          }
++          if (!validSubjectKinds.has(sub.kind as string) || typeof sub.id !== "string" || !ARENA_ID_REGEX.test(sub.id)) {
++            errors.push(`events[${idx}].subject must have valid kind and arenaId`);
++          }
++        }
++      }
++    });
++  }
++
++  return {
++    valid: errors.length === 0,
++    errors,
++  };
++}
++
++/**
++ * Capture a complete, schema-compliant RestaurantArenaTraceV3 from an active or finished RestaurantGame.
++ */
++export function captureArenaTrace(
++  game: RestaurantGame,
++  options: TraceCaptureOptions,
++): RestaurantArenaTraceV3 {
++  const state = game.state();
++  const seed = state.seed;
++  const episodeId = options?.episodeId ?? (state.episode.id || `dinner-rush-${seed}`);
++  const sessionId = options?.sessionId;
++  const envVersion = options?.envVersion ?? ARENA_ENV_VERSION;
++  const runKind = options?.runKind;
++  if (runKind !== "live" && runKind !== "synthetic" && runKind !== "benchmark") {
++    throw new Error(
++      "captureArenaTrace requires an explicit runKind of 'live', 'synthetic', or 'benchmark'",
++    );
++  }
++
++  // Use the recorded event history from the game run
++  const recorded = typeof game.getRecordedEvents === "function" ? game.getRecordedEvents() : [];
++  let events: TraceV3Event[] = options?.events ? [...options.events] : [...recorded];
++
++  if (options?.additionalEvents) {
++    events.push(...options.additionalEvents);
++    events.sort((a, b) => a.tick - b.tick);
++  }
++
++  // Events the engine journalled are already stamped with the round they
++  // happened in. Caller-supplied `events`/`additionalEvents` never went
++  // through that path, so they are stamped here from their tick — otherwise a
++  // trace this engine emits could still carry events without a round, and the
++  // round ids a reviewer reads would have holes in them.
++  events = events.map((event) => (event.round === undefined ? { ...event, round: roundForTick(event.tick) } : event));
++
++  // Replay state comes from the game's own frozen tick-0 snapshot and from
++  // nowhere else. A caller-supplied one could describe a different episode
++  // than the events record, and an absent one leaves a trace that validates
++  // but cannot be replayed.
++  if (typeof game.getInitialState !== "function") {
++    throw new Error(
++      "captureArenaTrace requires a game exposing getInitialState(): a trace without tick-0 state cannot be replayed",
++    );
++  }
++  const initialState = game.getInitialState();
++
++  const trace: RestaurantArenaTraceV3 = {
++    version: TRACE_V3_VERSION,
++    episodeId,
++    ...(sessionId ? { sessionId } : {}),
++    seed,
++    envVersion,
++    contractVersion: TRACE_V3_CONTRACT_VERSION,
++    runKind,
++    initialState,
++    events,
++    replay: game.getReplayRecord(),
++    terminal: game.getTerminalStatus(),
++    deletion: {
++      requestId: options?.deletion?.requestId ?? null,
++      status: options?.deletion?.status ?? "retained",
++    },
++  };
++
++  return trace;
++}
++
++/**
++ * Every event whose tool call failed or was rejected. `ok === false` is the
++ * whole sort: the validator holds `ok` and `error` to agree, so filtering on
++ * either one selects the same events.
++ */
++export function selectFailedEvents(trace: RestaurantArenaTraceV3): TraceV3Event[] {
++  return trace.events.filter((event) => event.toolResult?.ok === false);
++}
++
++export interface TraceFailureSummary {
++  total: number;
++  /** Failure count keyed by `toolResult.error.code`; unlabelled failures land under `unknown`. */
++  byCode: Record<string, number>;
++  /** Mean `latencyMs` across every event that recorded one, or null when none did. */
++  meanLatencyMs: number | null;
++}
++
++/** Counts failures by error code and averages recorded latency, for the run report. */
++export function summarizeTraceFailures(trace: RestaurantArenaTraceV3): TraceFailureSummary {
++  const failures = selectFailedEvents(trace);
++  const byCode: Record<string, number> = {};
++  for (const event of failures) {
++    const code = event.toolResult?.error?.code ?? "unknown";
++    byCode[code] = (byCode[code] ?? 0) + 1;
++  }
++
++  const latencies = trace.events
++    .map((event) => event.toolResult?.latencyMs)
++    .filter((value): value is number => typeof value === "number");
++
++  return {
++    total: failures.length,
++    byCode,
++    meanLatencyMs:
++      latencies.length > 0
++        ? latencies.reduce((sum, value) => sum + value, 0) / latencies.length
++        : null,
++  };
++}
++
++/**
++ * Export trace as formatted JSON string matching restaurant-arena-trace-v3 schema.
++ */
++export function exportTraceJson(trace: RestaurantArenaTraceV3, pretty = true): string {
++  return serializeJson(trace, pretty, false) ?? "null";
++}
++
++/**
++ * Export trace events as newline-delimited JSONL (one JSON object per line).
++ */
++export function exportTraceJsonl(trace: RestaurantArenaTraceV3): string {
++  const { events, ...header } = trace;
++  return [serializeJson(header, false, false), ...events.map((event) => serializeJson(event, false, false))].join("\n");
++}

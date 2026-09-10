@@ -1,0 +1,17 @@
+schema_version = "1.0"
+
+[task]
+name = "forge/tui-gamepigeon-auth-handoff-cli-browser-oauth"
+description = "Add browser based Google/GitHub OAuth sign-in to the tui-gamepigeon CLI and its Cloudflare auth worker."
+
+[agent]
+user = "agent"
+timeout_sec = 600
+
+[environment]
+workdir = "/app"
+
+[verifier]
+user = "root"
+timeout_sec = 600
+

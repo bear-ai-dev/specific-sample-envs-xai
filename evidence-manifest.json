@@ -1,0 +1,256 @@
+{
+  "captured_on": "2026-09-10",
+  "baseline": "Each task's unmodified environment image",
+  "after": "The same image after solution/solve.sh",
+  "verification_command": "bash /tests/test.sh",
+  "browser_viewport": "1280x720",
+  "tasks": {
+    "01-overlay-shell-ui-session-pause-window-lifecycle": {
+      "scenario": "Open Restaurant Arena and choose Training Shift",
+      "before_reward": 0,
+      "after_reward": 1,
+      "scored_rollouts": {
+        "passed": {
+          "configuration": "opus-5-claude-code",
+          "trial_number": 1,
+          "source_trial": "forge-tui-gamepigeon-overlay-she__APvVeYy",
+          "source_run": "run-bca820f7288c",
+          "reward": 1,
+          "verifier": "16 passed, 0 failed",
+          "image": "rollout-opus-trial-01-passed.png",
+          "image_sha256": "35dd09d96c99c5e94485b569c857f41300a93e3a801acfc8e09d2414f5a9a18a",
+          "record": "rollout-opus-trial-01-verifier.txt",
+          "record_sha256": "e6619680b1951366ef4ba4c8be876b5857240dc67eb546b9ddaab4f914946864"
+        },
+        "failed": {
+          "configuration": "opus-5-claude-code",
+          "trial_number": 2,
+          "source_trial": "forge-tui-gamepigeon-overlay-she__gxY3JhK",
+          "source_run": "run-bca820f7288c",
+          "reward": 0,
+          "verifier": "14 passed, 2 failed",
+          "post_qa_verdict": "FAIR",
+          "image": "rollout-opus-trial-02-failed.png",
+          "image_sha256": "8312c9b0f8a918cf3d9c2a631335e648b94d141aaca3287065b4cf83d9a4ca16",
+          "record": "rollout-opus-trial-02-verifier.txt",
+          "record_sha256": "d5a38549e74a4d9ba5b8a64a567e659a50ed4e1b37579dca5495d2a5386edf31"
+        },
+        "grok_passed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 5,
+          "source_trial": "forge-tui-gamepigeon-overlay-she__ZYa4VTF",
+          "source_run": "run-5e3f4536403c",
+          "reward": 1,
+          "image": "rollout-grok-trial-05-passed.png",
+          "image_sha256": "7d16e70d19bd7522f3c722ffa1c38902e5c7d0528f83b298115edc524463196f"
+        },
+        "grok_failed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 1,
+          "source_trial": "forge-tui-gamepigeon-overlay-she__JowMBPz",
+          "source_run": "run-5e3f4536403c",
+          "reward": 0,
+          "verifier": "14 passed, 2 failed",
+          "image": "rollout-grok-trial-01-failed.png",
+          "image_sha256": "3255a0e32c349f6b6df70c3f71ce75e94034be206705af23f682f9a5b7ecf764",
+          "record": "rollout-grok-trial-01-verifier.txt",
+          "record_sha256": "8ee3c7a6af3f8e070ed59001733f8d1079195befa4c34236847867be30b5a207"
+        }
+      },
+      "sha256": {
+        "before.png": "9074c3a21d6bea8a5be42b26a0d563a191f701da1cd5a72f403ffbf223d9bc9f",
+        "after.png": "211cd4e005f2c6dc5b09b0a8d7a111b8ddb36b1fc28e4ece728b01af2ba349b8",
+        "comparison.mp4": "ce9e6a71ab8ad380b9ee2928d6f7e97f8f8a4ba391d81475c78cb76070a7c220",
+        "verification.txt": "9363fbcd822157433ff6451832e4427f00ed191764c8ab83997054c6bd5e10b5"
+      }
+    },
+    "02-recording-trace-export-arena-trace-replay": {
+      "scenario": "Check the trace fixture and replay it through the public CLI",
+      "before_reward": 0,
+      "after_reward": 1,
+      "scored_rollouts": {
+        "failed": {
+          "configuration": "opus-5-claude-code",
+          "trial_number": 5,
+          "source_trial": "forge-tui-gamepigeon-recording-t__TMadjGG",
+          "source_run": "run-614ebf4a263e",
+          "reward": 0,
+          "verifier": "10 passed, 1 failed",
+          "post_qa_verdict": "FAIR",
+          "image": "rollout-opus-trial-05-failed.png",
+          "image_sha256": "4d1b94617b721237cfa964a39b6251edde6f1bcaca76df54e9e92b0c2f98e7da",
+          "record": "rollout-opus-trial-05-verifier.txt",
+          "record_sha256": "2fc9374664c630f937c673b3b2cfba90365d2bb5893cd0529f132e040f91330b"
+        },
+        "grok_passed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 1,
+          "source_trial": "forge-tui-gamepigeon-recording-t__4TpMJFw",
+          "source_run": "run-2e4ba03c28b4",
+          "reward": 1,
+          "image": "rollout-grok-trial-01-passed.png",
+          "image_sha256": "e64b34b8d710886ce5a56c0e5b46c8435a88053e08983307fe81e7db381d556f"
+        },
+        "grok_failed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 4,
+          "source_trial": "forge-tui-gamepigeon-recording-t__VqWTUWF",
+          "source_run": "run-2e4ba03c28b4",
+          "reward": 0,
+          "verifier": "10 passed, 1 failed",
+          "image": "rollout-grok-trial-04-failed.png",
+          "image_sha256": "f912f52692f461c33ffbf72166cf0c03296de97f90891b388f6d3963bc316f08",
+          "record": "rollout-grok-trial-04-verifier.txt",
+          "record_sha256": "8aeed2c5c711c2676082add7cecb0cc3946781dbce72bfa7e972b90b7f5afca5"
+        }
+      },
+      "sha256": {
+        "before.png": "3ea218f0d62ddf6649c9937341513eeecf1b1492ca74cf2f5d527272714a1d45",
+        "after.png": "3b4ff1ab8f62632ab419d63f98c4dc50a54fc441a7bc6ae1617c15ccef15a60b",
+        "verification.mp4": "99ca9f9dc9b79eb9c464a023990abb8b1157b7baad4d18db6d5d64d4ff019d64",
+        "verification.txt": "f723a7932ef8b8439304cc9721ff3410a417167d0037f42f73ab16f54a097325"
+      }
+    },
+    "03-restaurant-arena-engine-correction-scope-probe": {
+      "scenario": "Run the protected correction-scope behavior checks",
+      "before_reward": 0,
+      "after_reward": 1,
+      "scored_rollouts": {
+        "failed": {
+          "configuration": "opus-5-claude-code",
+          "trial_number": 8,
+          "source_trial": "forge-tui-gamepigeon-restaurant__z97bLRG",
+          "source_run": "run-0185146068d6",
+          "reward": 0,
+          "verifier": "13 passed, 1 failed",
+          "post_qa_verdict": "FAIR",
+          "image": "rollout-opus-trial-08-failed.png",
+          "image_sha256": "5adcd661d3ecf214813b76f25cec342e74d8d476869f56832c035f57e592795d",
+          "record": "rollout-opus-trial-08-verifier.txt",
+          "record_sha256": "ca278d2d26b1572ebe85c1d738a0fdb61f4d51fe106e0afbdeb7590019b48444"
+        },
+        "grok_passed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 1,
+          "source_trial": "forge-tui-gamepigeon-restaurant__8NK8kvS",
+          "source_run": "run-0b5c41265bd5",
+          "reward": 1,
+          "image": "rollout-grok-trial-01-passed.png",
+          "image_sha256": "bc3d2ab2b4cd457a84a43893eced27b2fe7acfa78ef69454658bea230780aa69"
+        },
+        "grok_failed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 2,
+          "source_trial": "forge-tui-gamepigeon-restaurant__UYtDcAS",
+          "source_run": "run-0b5c41265bd5",
+          "reward": 0,
+          "verifier": "13 passed, 1 failed",
+          "image": "rollout-grok-trial-02-failed.png",
+          "image_sha256": "c96d4db3ab8152f7878e835cfe9be5fc9323bfd3e9381e00b26a8fa7833cb723",
+          "record": "rollout-grok-trial-02-verifier.txt",
+          "record_sha256": "414abc03756aeb8b7b56aa800abfe753ec778081b4eafff03381997268c851e1"
+        }
+      },
+      "sha256": {
+        "before.png": "24f0046b0b6ccfeb8f79a158a731473484dfe363abedc822547e9bda4b8cedfb",
+        "after.png": "c570632bf2ca211388d8ad121d30ff9a550e6b94985802a96eeb2e602e48b327",
+        "verification.mp4": "904ce81deae3f03f7a97fdee1f0fc9a59d570b61ad506662541f73a6e8e43937",
+        "verification.txt": "938d5a7260e6017fc2af33a45d3299757a58ed7c5831f76479fd0d039bf94aa3"
+      }
+    },
+    "04-auth-handoff-cli-browser-oauth": {
+      "scenario": "Run the CLI callback and Worker handoff safety checks",
+      "before_reward": 0,
+      "after_reward": 1,
+      "scored_rollouts": {
+        "failed": {
+          "configuration": "opus-5-claude-code",
+          "trial_number": 6,
+          "source_trial": "forge-tui-gamepigeon-auth-handof__hTQBXpM",
+          "source_run": "run-3780b16b1b5a",
+          "reward": 0,
+          "verifier": "16 passed, 1 failed",
+          "post_qa_verdict": "FAIR",
+          "image": "rollout-opus-trial-06-failed.png",
+          "image_sha256": "3ad127a2aee0c7a086c229b16370aaf8ae32cb09861bc20d65daf571c1669e4b",
+          "record": "rollout-opus-trial-06-verifier.txt",
+          "record_sha256": "9c411ca7662872f8e4cbe041879533487535f4cda9fe9ebcc18340d336010dc6"
+        },
+        "grok_passed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 1,
+          "source_trial": "forge-tui-gamepigeon-auth-handof__ETMy8sV",
+          "source_run": "run-391e173af3dc",
+          "reward": 1,
+          "image": "rollout-grok-trial-01-passed.png",
+          "image_sha256": "a5d17946729182168348614f7da1fe77c5683e3e8cd3f446190b636e9b5fa574"
+        },
+        "grok_failed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 2,
+          "source_trial": "forge-tui-gamepigeon-auth-handof__PVLC9DD",
+          "source_run": "run-391e173af3dc",
+          "reward": 0,
+          "verifier": "15 passed, 2 failed",
+          "image": "rollout-grok-trial-02-failed.png",
+          "image_sha256": "433b02a764a2af216ce7a84e31dcb6d2c690f50a8248f0905d5740d1ee90efe2",
+          "record": "rollout-grok-trial-02-verifier.txt",
+          "record_sha256": "5f18cf4065c6471f9d15a30a0a81d54dbc835a723d40697fe1057807b1555514"
+        }
+      },
+      "sha256": {
+        "before.png": "8f98f8f84230f7eaf76fec3f1964435342e6a21ee1f6a2a2c5544f95ee3a86cf",
+        "after.png": "e073e3ed1128744d2eaac9f5af1058a30d340d961cc719c99a4954a5309585ff",
+        "verification.mp4": "100f694b21210ea5582ba7d2db50415e9758691eb2adaab1d8f3b70980b0f462",
+        "verification.txt": "c4cf72e681f3403429858185d5a766dac33c4c3829594e8d708456d1015e221a"
+      }
+    },
+    "05-arena-overlay-presentation-layout-staff-walk-repaint-gate": {
+      "scenario": "Render the Restaurant Arena briefing at 520x300",
+      "before_reward": 0,
+      "after_reward": 1,
+      "scored_rollouts": {
+        "failed": {
+          "configuration": "opus-5-claude-code",
+          "trial_number": 3,
+          "source_trial": "forge-tui-gamepigeon-arena-overl__Do8rhNR",
+          "source_run": "run-c9bb94efbe6e",
+          "reward": 0,
+          "verifier": "13 passed, 1 failed",
+          "post_qa_verdict": "FAIR",
+          "image": "rollout-opus-trial-03-failed.png",
+          "image_sha256": "59d9c8a67af259cf8c22695dc2294843aca6ea5a02e50c8bfdaac81a93fb7051",
+          "record": "rollout-opus-trial-03-verifier.txt",
+          "record_sha256": "8ed8abd837bf2ec44e7abdeb7866a0689895ce8ffa39c4605aeb79f04c21c99b"
+        },
+        "grok_passed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 2,
+          "source_trial": "forge-tui-gamepigeon-arena-overl__2uo54Sf",
+          "source_run": "run-9ce2b11b00f3",
+          "reward": 1,
+          "image": "rollout-grok-trial-02-passed.png",
+          "image_sha256": "0967f586ea3e1d19491166bab577ac99e91bf2c073a2db6525108f3bcbb38b80"
+        },
+        "grok_failed": {
+          "configuration": "grok-4.6-grok-build",
+          "trial_number": 1,
+          "source_trial": "forge-tui-gamepigeon-arena-overl__2nbjiPP",
+          "source_run": "run-9ce2b11b00f3",
+          "reward": 0,
+          "verifier": "12 passed, 2 failed",
+          "image": "rollout-grok-trial-01-failed.png",
+          "image_sha256": "5a11bda743eccb49d0874267f68fa824f0f5f4f94fb62e4570664fab45b0efd4",
+          "record": "rollout-grok-trial-01-verifier.txt",
+          "record_sha256": "4b422b991670f1fcd332c6c9289fe0edeb79434b1a9cec3768c29bed731d33f9"
+        }
+      },
+      "sha256": {
+        "before.png": "02e14238ebb40f20f7623bd36dadf8e25606a1dde0b71ba229670d15ce5db105",
+        "after.png": "6aeb20681cde64f6f132451365dfb539943359b1f3195a02619e13d6b423ad98",
+        "comparison.mp4": "f8529e880c64419eca06944902fee25916d64dc897211c4d1443bd130c565b93",
+        "verification.txt": "e3b523b2bc4634da2a7ca96a5055c9ef0340a2b5e8c76c9e04aface3fd8d5ade"
+      }
+    }
+  }
+}

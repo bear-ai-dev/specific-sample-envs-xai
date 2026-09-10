@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-01",
+  "task": "04-auth-handoff-cli-browser-oauth",
+  "trial_number": 1,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-391e173af3dc",
+  "configuration": "grok-4.6-grok-build",
+  "model": "openrouter/x-ai/grok-4.6",
+  "model_label": "Grok 4.6",
+  "route": "x-ai/grok-4.6",
+  "provider": "OpenRouter",
+  "harness": "Grok Build",
+  "agent_version": "1.0.25",
+  "reasoning_effort": "high",
+  "max_output_tokens": 500000,
+  "status": "complete",
+  "reward": 1,
+  "solved": true,
+  "source_trial": "forge-tui-gamepigeon-auth-handof__ETMy8sV",
+  "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__ETMy8sV",
+  "metrics": {
+    "wall_clock_seconds": 1057,
+    "output_tokens": 55643,
+    "step_count": 44
+  },
+  "trajectory": {
+    "path": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-01.json",
+    "sha256": "b152884f97a9d0831ec203175690d1076514d1b0a8186c91dc090789e90f3e7b",
+    "redacted": true
+  }
+}

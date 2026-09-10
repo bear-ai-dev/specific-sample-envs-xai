@@ -1,0 +1,21 @@
+{
+  "name": "tui-gamepigeon",
+  "version": "0.3.4",
+  "description": "Play in a lightweight HTML overlay while Codex works.",
+  "author": {
+    "name": "Trolleroof"
+  },
+  "repository": "https://github.com/Trolleroof/tui-gamepigeon",
+  "license": "MIT",
+  "keywords": ["arcade", "restaurant-arena", "terminal", "game"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Tui",
+    "shortDescription": "Play Protect vs. Loot while Codex works",
+    "longDescription": "Open or restore a lightweight Protect vs. Loot HTML overlay without leaving the active Codex task.",
+    "developerName": "Trolleroof",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive"],
+    "defaultPrompt": ["Open the Tui."]
+  }
+}

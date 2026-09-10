@@ -1,0 +1,1052 @@
+diff --git a/overlay/app.ts b/overlay/app.ts
+index ee695b8..e27131b 100644
+--- a/overlay/app.ts
++++ b/overlay/app.ts
+@@ -3,17 +3,30 @@ import { FEATURED_GAME_IDS, MENU_GAMES, isPlayable } from "../src/games/registry
+ import type { StepResult } from "../src/core/game.js";
+ import type { Key } from "../src/core/key.js";
+ import type { EpisodeEndReason, TraceActor } from "../src/recording/types.js";
++import { localScoreForCompletion } from "../src/results/local-score.js";
+ import { renderNativeGame } from "./renderers.js";
+ import { captureOverlayEvent } from "./analytics.js";
+ import type { RoundStatus } from "../src/games/restaurant-arena/rounds.js";
++import type { PauseReason } from "./pause-state.js";
++import { shouldReopenGameOver, shouldScheduleTick } from "./pause-state.js";
+ import {
+   appendOverlayAction,
+   buildOverlayGameResult,
+   buildOverlayTraceChunks,
+   buildSealedOverlayTraceChunks,
++  createOverlayTrace,
+   type StoredOverlayTrace,
+ } from "./recording.js";
+-import { getOverlayWindow, invoke, isTauri } from "./tauri-bridge.js";
++import {
++  COMPACT_SIZE,
++  EXPANDED_SIZE,
++  MIN_SIZE,
++  PILL_SIZE,
++  getOverlayWindow,
++  invoke,
++  isTauri,
++  overlayLogicalSize,
++} from "./tauri-bridge.js";
+ import { bindUpdateBanner, refreshUpdateBanner } from "./update.js";
+ import {
+   CLEAR as WORKER_BUDGET_CLEAR,
+@@ -28,6 +41,7 @@ import {
+   type AuthUser,
+   beginSignIn,
+   cancelSignIn,
++  clearSignInPending,
+   copySignInUrl,
+   gateMarkup,
+   isSignedIn,
+@@ -35,12 +49,16 @@ import {
+   renderAccountChip,
+   renderSignInBar,
+   signedInUser,
++  setSignInStatus,
+   setSignedInUser,
+   setSyncError,
++  signOut,
+ } from "./auth.js";
+-import { loadSavedGame, type SavedGame } from "./persistence.js";
++import { clearSavedGame, loadSavedGame, restoreGame, saveGame, type SavedGame } from "./persistence.js";
+ import { mountRestaurantArenaScene, type RestaurantArenaSceneHandle, type RestaurantArenaState } from "./restaurant-arena-scene.js";
++import type { RestaurantState } from "../src/games/restaurant-arena/types.js";
+ import { buildArenaTimeline, renderTimelineHtml } from "../src/games/restaurant-arena/timeline.js";
++import { replayArenaTrace, applyArenaReplayInput } from "../src/games/restaurant-arena/replay.js";
+ import { captureArenaTrace, exportTraceJson, exportTraceJsonl, type RestaurantArenaTraceV3, type TraceV3Model } from "../src/games/restaurant-arena/trace.js";
+ import type { PlayerInterventionInput, PlayerInterventionTarget, RestaurantGame } from "../src/games/restaurant-arena/restaurant-game.js";
+ import { WorkerModelClient, type ModelCallMetrics, type ModelRequest } from "../src/games/restaurant-arena/worker-client.js";
+@@ -50,7 +68,16 @@ import type { Role } from "../src/games/restaurant-arena/types.js";
+ declare const __APP_VERSION__: string | undefined;
+ 
+ const windowHandle = getOverlayWindow();
++const titlebar = document.querySelector<HTMLElement>(".titlebar")!;
+ const screenElement = document.querySelector<HTMLElement>("#screen")!;
++const resizeButton = document.querySelector<HTMLButtonElement>("#resize")!;
++const pillElement = document.querySelector<HTMLButtonElement>("#pill")!;
++const promptElement = document.querySelector<HTMLElement>("#return-prompt")!;
++const promptTitle = document.querySelector<HTMLHeadingElement>("#return-title")!;
++const continueButton = document.querySelector<HTMLButtonElement>("#continue-game")!;
++const menuButton = document.querySelector<HTMLButtonElement>("#return-menu")!;
++const howToPlayElement = document.querySelector<HTMLElement>("#how-to-play")!;
++const howToPlayClose = document.querySelector<HTMLButtonElement>("#how-to-play-close")!;
+ 
+ function browserKey(event: KeyboardEvent): Key | null {
+   switch (event.key) {
+@@ -100,12 +127,20 @@ interface LocalScores {
+   recent: LocalScoreEntry[];
+   top_scores: LocalScoreEntry[];
+ }
++// Start gated so any launch/pause/input arriving before auth resolves is blocked;
++
+ let screen: Screen = "gate";
+ let cursor = -1;
+ let variationCursor = 0;
+ let entry: GameEntry | undefined;
+ let game: PlayableGame | undefined;
++let gravityTimer: ReturnType<typeof setTimeout> | undefined;
+ let expanded = false;
++let minimized = false;
++let resizePending: Promise<void> | undefined;
++let pauseReason: PauseReason;
++/** Pause prompt to restore after closing How to Play opened from it. */
++let howToPlayResume: PauseReason;
+ let gameStartedAt = 0;
+ let actionsTaken = 0;
+ let gameEnded = false;
+@@ -247,6 +282,7 @@ function recoverTraces(): void {
+   for (const trace of pending) submitTrace(trace, trace.endReason ?? "client_closed");
+ }
+ let savedGame: SavedGame | undefined;
++let signInMinimizeTimer: number | undefined;
+ 
+ function escapeHtml(value: string): string {
+   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
+@@ -296,7 +332,7 @@ function refreshLocalScores(): void {
+     if (screen === "menu") drawMenu();
+     else if (screen === "variations") drawVariations();
+     else if (screen === "scores") drawScores();
+-    else if (screen === "game") drawGame();
++    else if (screen === "game" && pauseReason !== "game-over") drawGame();
+   }).catch(() => undefined);
+ }
+ 
+@@ -378,6 +414,7 @@ function unlockTui(user: AuthUser): void {
+   cursor = -1;
+   screen = "menu";
+   drawMenu();
++  if (settings.resumeLastGame) resumeSavedGame(user.id);
+   renderAccountChip();
+   renderSignInBar();
+ }
+@@ -453,6 +490,9 @@ function updateRestaurantArena(activeGame: PlayableGame): boolean {
+   if (!mount) return false;
+   restaurantArenaScene?.render(arenaView(activeGame));
+   refreshInterventionPanel(activeGame);
++  // A decision or a pause changes the tick cadence, so the clock has to be
++  // rescheduled off the new interval rather than the one in flight.
++  scheduleGravity();
+   return true;
+ }
+ 
+@@ -639,6 +679,7 @@ function attachWorkerOrchestrator(activeGame: PlayableGame): void {
+       // last throttle said was left on its countdown.
+       if (report.turns.every((turn) => turn.status === "accepted")) setWorkerBudget(WORKER_BUDGET_CLEAR);
+       drawGame();
++      maybeGameOver();
+     },
+   });
+   workerOrchestrator = orchestrator;
+@@ -827,7 +868,11 @@ function renderGameScreen(): void {
+         mount,
+         arenaView(game),
+         (action) => performAction(action),
+-        () => {},
++        (action) => {
++          if (action === "menu") exitToMenu();
++          else if (action === "restart") restartGame();
++          else openHowToPlay();
++        },
+       );
+       bindInterventionPanel();
+       refreshInterventionPanel(game);
+@@ -849,6 +894,247 @@ function drawGame(): void {
+   setPersonalBest();
+ }
+ 
++function tickInterval(current: PlayableGame): number | null {
++  if (!current.tickMs) return null;
++  // 0 is a game saying "hold the clock" — paused, mid-decision, or finished.
++  const interval = current.tickMs();
++  return interval > 0 ? interval : null;
++}
++
++function stopGravity(): void {
++  if (gravityTimer) clearTimeout(gravityTimer);
++  gravityTimer = undefined;
++  workerOrchestrator?.pause();
++}
++
++function scheduleGravity(): void {
++  if (!game || !shouldScheduleTick({ screen, gameOver: game.isOver(), pauseReason })) return;
++  const interval = tickInterval(game);
++  if (interval === null) {
++    workerOrchestrator?.pause();
++    return;
++  }
++  if (workerOrchestrator) {
++    workerOrchestrator.start();
++    return;
++  }
++  // Supersede any pending tick. Several callers (closing the pause prompt,
++  // restoring the window, signing out) resume gravity without stopping it
++  // first, and the timer handle is overwritten rather than cleared — so the
++  // orphaned timeout kept firing and rescheduling itself. Two live loops tick
++  // the game twice per interval instead of once.
++  stopGravity();
++  const current = game;
++  gravityTimer = setTimeout(() => {
++    if (game !== current || !shouldScheduleTick({ screen, gameOver: current.isOver(), pauseReason })) return;
++    performAction("tick");
++    scheduleGravity();
++  }, interval);
++}
++
++function launch(selected: GameEntry, variationId: string, restored?: SavedGame): void {
++  stopWorkerOrchestrator();
++  endGame("abandoned", "restart");
++  replaying = false;
++  stopGravity();
++  entry = selected;
++  const recovered = restored ? restoreGame(selected, restored) : null;
++  const seed = (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
++  game = recovered?.game ?? selected.create!(variationId);
++  if (!recovered) game.reset(seed);
++  attachWorkerOrchestrator(game);
++  savedGame = recovered ? { ...restored!, actions: recovered.actions } : {
++    schemaVersion: 1,
++    ownerId: signedInUser()?.id ?? "",
++    gameId: selected.id,
++    gameVersion: selected.version,
++    variationId,
++    seed,
++    actions: [],
++  };
++  saveGame(savedGame);
++  gameStartedAt = Date.now();
++  actionsTaken = savedGame.actions.length;
++  gameEnded = false;
++  gameSessionId = crypto.randomUUID();
++  cancelTraceFlush();
++  if (isTauri()) {
++    activeTrace = createOverlayTrace(selected, variationId, savedGame.seed);
++    sessionReceiptId = activeTrace.gameId;
++    for (const action of savedGame.actions) {
++      appendOverlayAction(activeTrace, action, action === "tick" || action === "bot_move" ? "environment" : "human");
++    }
++    persistTrace(activeTrace);
++    flushSealedTrace(activeTrace);
++  }
++  captureOverlayEvent("game.started", { game_type: selected.id, variation_id: variationId }, gameSessionId);
++  screen = "game";
++  closePrompt();
++  // Full repaint: restarting reuses the same board markup, and patching it
++  // would animate a brand-new game as if the pieces had moved there.
++  renderGameScreen();
++  scheduleGravity();
++}
++
++function resumeSavedGame(ownerId = signedInUser()?.id ?? ""): void {
++  const saved = savedGame ?? loadSavedGame();
++  if (!saved || saved.ownerId !== ownerId) return;
++  const selected = MENU_GAMES.find((item) => item.id === saved.gameId);
++  if (!selected || !isPlayable(selected)) return;
++  const variation = selected.variations.find((item) => item.id === saved.variationId);
++  if (!variation) return;
++  if (!restoreGame(selected, saved)) {
++    clearSavedGame();
++    savedGame = undefined;
++    drawMenu();
++    return;
++  }
++  cursor = MENU_GAMES.indexOf(selected);
++  entry = selected;
++  variationCursor = selected.variations.indexOf(variation);
++  launch(selected, variation.id, saved);
++}
++
++function restartGame(): void {
++  if (entry) launch(entry, entry.variations[variationCursor]?.id ?? entry.variations[0]!.id);
++}
++
++async function replayLastRun(): Promise<void> {
++  const replay = lastReplay;
++  if (!replay?.entry.create) return;
++  if (replay.arenaTrace) replayArenaTrace(replay.arenaTrace); // Verify before animating the saved inputs.
++  closePrompt();
++  stopWorkerOrchestrator();
++  stopGravity();
++  entry = replay.entry;
++  variationCursor = replay.entry.variations.findIndex(({ id }) => id === replay.variationId);
++  game = replay.entry.create(replay.variationId);
++  game.reset(replay.seed);
++  savedGame = undefined;
++  activeTrace = undefined;
++  sessionReceiptId = undefined;
++  actionsTaken = 0;
++  gameEnded = true;
++  replaying = true;
++  screen = "game";
++  renderGameScreen();
++  const replayGame = game;
++  const inputs = replay.arenaTrace?.replay.inputs ?? replay.actions;
++  for (const [index, action] of inputs.entries()) {
++    await new Promise((resolve) => setTimeout(resolve, 650));
++    if (game !== replayGame || screen !== "game") {
++      replaying = false;
++      return;
++    }
++    if (typeof action === "string") replayGame.step(action);
++    else applyArenaReplayInput(replayGame as unknown as RestaurantGame, action, index);
++    actionsTaken++;
++    drawGame();
++  }
++  replaying = false;
++  if (game === replayGame) openPrompt("game-over");
++}
++
++function exitToMenu(): void {
++  stopWorkerOrchestrator();
++  endGame("abandoned", "user_quit");
++  stopGravity();
++  restaurantArenaScene?.destroy();
++  restaurantArenaScene = undefined;
++  game = undefined;
++  screen = "menu";
++  closePrompt();
++  delete screenElement.dataset.game;
++  drawMenu();
++}
++
++function endGame(
++  outcome: "completed" | "abandoned",
++  reason: EpisodeEndReason = game?.hasWon() ? "won" : "game_over",
++): void {
++  if (!game || !entry || gameEnded) return;
++  gameEnded = true;
++  if (outcome === "abandoned" && game.name === "restaurant-arena") (game as unknown as RestaurantGame).markAbandoned(reason);
++  const endedAtMs = Date.now();
++  const variationId = entry.variations[variationCursor]?.id ?? "classic";
++  const localScore = localScoreForCompletion({
++    outcome,
++    gameId: sessionReceiptId ?? `game_${gameSessionId ?? crypto.randomUUID()}`,
++    gameType: entry.id,
++    variationId,
++    score: game.score(),
++    success: game.hasWon(),
++    endedAtMs,
++    startedAtMs: gameStartedAt,
++    platform: "overlay",
++  });
++  if (localScore) void invoke("append_local_score", { score: localScore }).then(refreshLocalScores).catch(() => undefined);
++  if (outcome === "completed") {
++    if (savedGame) {
++      lastReplay = { entry, variationId, seed: savedGame.seed, actions: [...savedGame.actions],
++        ...(game.name === "restaurant-arena" ? { arenaTrace: captureArenaTrace(game as unknown as RestaurantGame, { runKind: "live" }) } : {}) };
++    }
++    clearSavedGame();
++    savedGame = undefined;
++  }
++  captureOverlayEvent("game.ended", {
++    game_type: entry.id,
++    variation_id: variationId,
++    outcome,
++    score: game.score(),
++    success: outcome === "completed" && game.hasWon(),
++    duration_ms: Math.max(0, endedAtMs - gameStartedAt),
++    actions_taken: actionsTaken,
++  }, gameSessionId);
++  if (activeTrace) {
++    const trace = activeTrace;
++    activeTrace = undefined;
++    cancelTraceFlush();
++    submitTrace(trace, reason, outcome === "completed" ? game.score() : undefined);
++  }
++}
++
++/**
++ * Restaurant Arena grades a shift against its own target (cash, walkouts,
++ * unsafe plates), which is a stricter and more specific bar than the
++ * generic `hasWon()` (just "served one safe order") every other game
++ * shares. Falling back to the generic check here produced a genuinely
++ * contradictory screen — "You won!" over a debrief that said "TARGET
++ * MISSED" a few lines down — so restaurant-arena's own verdict wins
++ * whenever a debrief exists.
++ */
++function arenaMetGoal(): boolean | undefined {
++  if (!game || game.name !== "restaurant-arena") return undefined;
++  const view = arenaView(game) as unknown as { debrief?: { met: boolean } };
++  return view.debrief?.met;
++}
++
++function gameOverTitle(): string {
++  if (!game) return "Game over";
++  const arenaMet = arenaMetGoal();
++  if (arenaMet !== undefined) return arenaMet ? "Shift complete!" : "Game over";
++  return game.hasWon() ? "You won!" : "Game over";
++}
++
++function gameOverTone(): "win" | "loss" | "draw" | undefined {
++  const arenaMet = arenaMetGoal();
++  if (arenaMet !== undefined) return arenaMet ? "win" : undefined;
++  return game?.hasWon() ? "win" : undefined;
++}
++
++function maybeGameOver(): void {
++  if (game?.isOver() && pauseReason !== "game-over") {
++    endGame("completed");
++    if (screen === "game") openPrompt("game-over");
++  }
++}
++
++function getGameEndStats(): string {
++  if (!game || game.name !== "restaurant-arena") return "";
++  const state = game.state() as RestaurantState;
++  const out = state.outcomes;
++  return `$${out.cash.toFixed(0)} earned, ${out.completed} orders served, ${out.safeOrders} safe (${actionsTaken} actions)`;
++}
+ 
+ interface ArenaDebrief {
+   grade: string;
+@@ -1017,6 +1303,128 @@ function exportCurrentTrace(format: "json" | "jsonl" = "json"): void {
+   }
+ }
+ 
++function howToPlayOpen(): boolean {
++  return !howToPlayElement.hidden;
++}
++
++function openHowToPlay(): void {
++  if (screen === "game" && pauseReason === "agent") howToPlayResume = "agent";
++  else howToPlayResume = undefined;
++  if (screen === "game" && pauseReason !== "game-over" && pauseReason !== "signout") {
++    pauseReason = "how-to-play";
++    stopGravity();
++  }
++  promptElement.hidden = true;
++  howToPlayElement.hidden = false;
++  howToPlayClose.focus();
++}
++
++function closeHowToPlay(): void {
++  howToPlayElement.hidden = true;
++  const resume = howToPlayResume;
++  howToPlayResume = undefined;
++  if (resume === "agent") {
++    openPrompt("agent");
++    return;
++  }
++  if (pauseReason === "how-to-play") {
++    pauseReason = undefined;
++    if (screen === "game") scheduleGravity();
++  }
++}
++
++function closePrompt(): void {
++  pauseReason = undefined;
++  howToPlayResume = undefined;
++  howToPlayElement.hidden = true;
++  promptElement.hidden = true;
++  promptElement.dataset.tone = "";
++  const overlay = screenElement.querySelector(".game-end-overlay");
++  if (overlay) overlay.remove();
++  if (screen === "game") {
++    scheduleGravity();
++  }
++}
++
++function openPrompt(reason: "agent" | "game-over"): void {
++  pauseReason = reason;
++  // Freeze the board under the dialog: an agent pause used to leave the tick
++  // loop running while the player read the prompt. `closePrompt` restarts it.
++  stopGravity();
++  if (reason === "agent") {
++    promptTitle.textContent = "Paused";
++    promptElement.dataset.tone = "";
++    continueButton.innerHTML = "Continue playing";
++    promptElement.hidden = false;
++    document.querySelector<HTMLButtonElement>("#return-code")!.focus();
++  } else {
++    promptElement.hidden = true;
++    const boardEl = screenElement.querySelector(".board");
++    if (boardEl) {
++      const existing = boardEl.querySelector(".game-end-overlay");
++      if (existing) existing.remove();
++
++      // The debrief carries the same numbers in a readable grid, so the
++      // one-line stats string would only repeat it.
++      const isArena = game?.name === "restaurant-arena";
++      const debriefHtml = getArenaDebriefHtml();
++      const evidenceHtml = isArena ? getArenaEvidenceHtml() : "";
++      const timelineHtml = isArena ? getArenaTimelineHtml() : "";
++      const overlay = document.createElement("div");
++      overlay.className = "game-end-overlay";
++      const tone = gameOverTone();
++      if (tone) overlay.dataset.tone = tone;
++
++      overlay.innerHTML = `
++        <div class="game-end-content${isArena ? " arena-end-content" : ""}">
++          <h2 class="game-end-title">${escapeHtml(gameOverTitle())}</h2>
++          ${debriefHtml ? "" : `<p class="game-end-stats">${escapeHtml(getGameEndStats())}</p>`}
++          ${debriefHtml}
++          ${evidenceHtml}
++          ${timelineHtml}
++          ${sessionReceiptHtml()}
++          <div class="game-end-actions">
++            <button type="button" class="primary" data-restart>New run</button>
++            ${lastReplay ? '<button type="button" data-replay>Replay</button>' : ""}
++            ${
++              isArena
++                ? `
++            <div class="export-trace-group">
++              <button type="button" class="export-trace-btn" data-action="export-trace" title="Export trace as restaurant-arena-trace-v3 JSON">Export Trace</button>
++              <button type="button" class="export-trace-btn-alt" data-action="export-trace-jsonl" title="Export trace as JSONL">JSONL</button>
++            </div>`
++                : ""
++            }
++            <button type="button" data-action="menu"><kbd>M</kbd> Menu</button>
++            <button type="button" data-action="return-code"><kbd>Esc</kbd> Coding</button>
++          </div>
++        </div>
++      `;
++      boardEl.appendChild(overlay);
++      overlay.querySelector<HTMLButtonElement>("[data-restart]")?.focus();
++    } else {
++      promptTitle.textContent = gameOverTitle();
++      promptElement.dataset.tone = gameOverTone() ?? "";
++      continueButton.innerHTML = "New run";
++      promptElement.hidden = false;
++      document.querySelector<HTMLButtonElement>("#return-code")!.focus();
++    }
++  }
++}
++
++/**
++ * Put the game-over UI back when the overlay comes into view on a run that is
++ * still finished. Returning to code now minimizes rather than closing the
++ * prompt, so this only fires for the cases where `pauseReason` was cleared
++ * some other way and the board would otherwise look playable but ignore
++ * every key (issue #141).
++ */
++function reopenGameOverIfFinished(): void {
++  if (shouldReopenGameOver({ screen, gameOver: game?.isOver() ?? false, pauseReason })) {
++    openPrompt("game-over");
++  }
++}
++
+ function moveMenuCursor(delta: number): void {
+   if (cursor === -1) {
+     cursor = delta > 0 ? 0 : MENU_GAMES.length - 1;
+@@ -1035,20 +1443,36 @@ function handleMenuKey(key: Key): void {
+   else if (typeof key === "object" && key.char.toLowerCase() === "g") drawSettings();
+ }
+ 
++function launchFromRequest(gameId: string, variationId = "classic"): void {
++  const index = MENU_GAMES.findIndex((item) => item.id === gameId);
++  if (index < 0) return;
++  const selected = MENU_GAMES[index];
++  if (!selected || !isPlayable(selected)) return;
++  cursor = index;
++  entry = selected;
++  const variationIndex = selected.variations.findIndex((variation) => variation.id === variationId);
++  variationCursor = variationIndex >= 0 ? variationIndex : 0;
++  launch(selected, selected.variations[variationCursor]!.id);
++}
++
+ function chooseGame(index: number): void {
+   const selected = MENU_GAMES[index];
+   if (!selected || !isPlayable(selected)) return;
+   cursor = index;
+   entry = selected;
+   variationCursor = 0;
+-  screen = "variations";
+-  drawVariations();
++  if (selected.variations.length === 1) launch(selected, selected.variations[0]!.id);
++  else {
++    screen = "variations";
++    drawVariations();
++  }
+ }
+ 
+ function handleVariationKey(key: Key): void {
+   if (!entry) return;
+   if (key === "up" || key === "left") variationCursor = (variationCursor - 1 + entry.variations.length) % entry.variations.length;
+   else if (key === "down" || key === "right") variationCursor = (variationCursor + 1) % entry.variations.length;
++  else if (key === "enter") return launch(entry, entry.variations[variationCursor]!.id);
+   else if (key === "quit") { screen = "menu"; drawMenu(); return; }
+   drawVariations();
+ }
+@@ -1080,8 +1504,13 @@ function performAction(action: string): boolean {
+     action === "tick" || action === "bot_move" ? "environment" : "human",
+   );
+   actionsTaken++;
++  if (result.moved && savedGame) {
++    savedGame.actions.push(action);
++    saveGame(savedGame);
++  }
+ 
+   drawGame();
++  maybeGameOver();
+   return result.moved;
+ }
+ 
+@@ -1103,6 +1532,8 @@ function setControlPressed(action: string, pressed: boolean): void {
+ 
+ function handleGameKey(key: Key): void {
+   if (!game) return;
++  if (key === "quit") return exitToMenu();
++  if (key === "restart") return restartGame();
+   if (game.isOver()) return;
+   const action = genericAction(key);
+   if (action) {
+@@ -1114,9 +1545,36 @@ function handleGameKey(key: Key): void {
+ window.addEventListener("keydown", (event) => {
+   const target = event.target as HTMLElement | null;
+   if (target?.matches("input, textarea, select, [contenteditable=\"true\"]")) return;
++  if (minimized) {
++    // Nothing behind the pill is visible, so keys only reopen it.
++    if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
++      event.preventDefault();
++      void restore();
++    }
++    return;
++  }
++  if (howToPlayOpen()) {
++    event.preventDefault();
++    if (event.key === "Escape" || event.key === "Enter") closeHowToPlay();
++    return;
++  }
++  if (event.key === "Escape") {
++    event.preventDefault();
++    void minimize();
++    return;
++  }
++  if (pauseReason) {
++    if (pauseReason === "signout") {
++      if (event.key === "Enter") void handleSignOutConfirm();
++    } else {
++      if (event.key === "m" || event.key === "M") exitToMenu();
++    }
++    event.preventDefault();
++    return;
++  }
+   if (screen === "gate") {
+     // Block menu/game input until signed in; Enter starts sign-in.
+-    if (event.key === "Enter") { event.preventDefault(); void beginSignIn(); }
++    if (event.key === "Enter") { event.preventDefault(); void beginSignInAndMinimize(); }
+     return;
+   }
+   const key = browserKey(event);
+@@ -1132,7 +1590,7 @@ window.addEventListener("keydown", (event) => {
+ window.addEventListener("keyup", (event) => {
+   const target = event.target as HTMLElement | null;
+   if (target?.matches("input, textarea, select, [contenteditable=\"true\"]")) return;
+-  if (screen !== "game" || !game) return;
++  if (screen !== "game" || pauseReason || !game) return;
+   const key = browserKey(event);
+   if (!key) return;
+   const action = genericAction(key);
+@@ -1145,8 +1603,12 @@ screenElement.addEventListener("click", (event) => {
+   if (screen === "gate") {
+     // gateMarkup() renders these buttons after this listener is bound, so
+     // they can only be reached through delegation here.
+-    if (target.id === "auth-signin") void beginSignIn();
++    if (target.id === "auth-signin") void beginSignInAndMinimize();
+     else if (target.id === "auth-signin-cancel") {
++      if (signInMinimizeTimer) {
++        clearTimeout(signInMinimizeTimer);
++        signInMinimizeTimer = undefined;
++      }
+       void cancelSignIn();
+     } else if (target.id === "auth-copy-link") {
+       void copySignInUrl().then((copied) => {
+@@ -1157,11 +1619,13 @@ screenElement.addEventListener("click", (event) => {
+     return;
+   }
+   if (target.id === "inline-back") {
+-    if (screen === "variations" || screen === "scores" || screen === "settings") { screen = "menu"; drawMenu(); }
++    if (screen === "game") exitToMenu();
++    else if (screen === "variations" || screen === "scores" || screen === "settings") { screen = "menu"; drawMenu(); }
+     return;
+   }
+   if (target.hasAttribute("data-open-settings")) return drawSettings();
+   if (target.hasAttribute("data-open-scores")) return drawScores();
++  if (target.hasAttribute("data-open-how-to-play")) return openHowToPlay();
+   if (target.dataset.setting) {
+     const raw = target instanceof HTMLInputElement ? target.checked : (target as HTMLSelectElement).value;
+     const value = target.dataset.setting === "suggestionsSnoozedUntil"
+@@ -1169,18 +1633,239 @@ screenElement.addEventListener("click", (event) => {
+     return saveSetting(target.dataset.setting, value);
+   }
+   if (target.dataset.gameIndex) return chooseGame(Number(target.dataset.gameIndex));
++  if (target.hasAttribute("data-resume")) return resumeSavedGame();
++  if (target.dataset.variationIndex && entry) {
++    variationCursor = Number(target.dataset.variationIndex);
++    return launch(entry, entry.variations[variationCursor]!.id);
++  }
++  if (target.dataset.action === "menu") return exitToMenu();
++  if (target.dataset.action === "return-code") return void minimize();
++  if (target.hasAttribute("data-restart")) return restartGame();
++  if (target.hasAttribute("data-replay")) return void replayLastRun();
+   if (target.dataset.action === "export-trace") return void exportCurrentTrace("json");
+   if (target.dataset.action === "export-trace-jsonl") return void exportCurrentTrace("jsonl");
+   if (target.dataset.action) performAction(target.dataset.action);
+ });
+ 
++function arcadeLocked(): boolean {
++  return isTauri() && !isSignedIn();
++}
++
++window.addEventListener("gamepigeon:launch", (event) => {
++  if (arcadeLocked() || screen === "gate") return;
++  const detail = (event as CustomEvent<{ game?: string; variation?: string }>).detail;
++  if (!detail?.game) return;
++  launchFromRequest(detail.game, detail.variation);
++});
++window.addEventListener("gamepigeon:pause", () => { if (!arcadeLocked() && screen === "game" && !pauseReason) openPrompt("agent"); });
++window.addEventListener("gamepigeon:resume", () => {
++  void restore(true);
++  if (pauseReason === "agent") closePrompt();
++});
++window.addEventListener("gamepigeon:reset", () => {
++  if (screen === "gate") { void refreshUpdateBanner(); return; }
++  cursor = -1;
++  variationCursor = 0;
++  entry = undefined;
++  exitToMenu();
++  refreshLocalScores();
++  void refreshUpdateBanner();
++});
++
++window.addEventListener("gamepigeon:auth-success", (event) => {
++  clearSignInPending();
++  if (signInMinimizeTimer) {
++    clearTimeout(signInMinimizeTimer);
++    signInMinimizeTimer = undefined;
++  }
++  const detail = (event as CustomEvent<{ email?: string }>).detail;
++  void loadAuthSession().then((user) => {
++    const resolved = user ?? (detail?.email ? { id: "", email: detail.email } : null);
++    if (resolved) {
++      unlockTui(resolved);
++      recoverTraces();
++      refreshLocalScores();
++    }
++  });
++});
++window.addEventListener("gamepigeon:auth-error", (event) => {
++  clearSignInPending();
++  if (signInMinimizeTimer) {
++    clearTimeout(signInMinimizeTimer);
++    signInMinimizeTimer = undefined;
++  }
++  const detail = (event as CustomEvent<string>).detail;
++  const message = typeof detail === "string" && detail ? detail : "Sign-in failed. Try again.";
++  setSignInStatus("error", message);
++});
+ window.addEventListener(WORKER_BUDGET_EVENT, (event) => {
+   const state = readWorkerBudgetSignal((event as CustomEvent<unknown>).detail);
+   if (state) setWorkerBudget(state);
+ });
++window.addEventListener("gamepigeon:sync-success", () => setSyncError(null));
++window.addEventListener("gamepigeon:sync-error", (event) => {
++  const detail = (event as CustomEvent<string>).detail;
++  setSyncError(typeof detail === "string" && detail ? detail : "Cloud sync is paused.");
++});
++
++titlebar.addEventListener("mousedown", (event) => {
++  const target = event.target;
++  if (target instanceof HTMLElement && target.closest("button,a,input,select,textarea")) return;
++  if (event.buttons === 1) void windowHandle.startDragging();
++});
+ 
++/**
++ * Collapse the arcade to the handheld pill. The window's min size is the
++ * arcade's floor and would clamp the pill, so it has to drop first — and be
++ * restored on the way back out. Live games freeze while collapsed rather than
++ * playing themselves out where nobody can see them.
++ */
++async function minimize(): Promise<void> {
++  if (resizePending) await resizePending;
++  if (minimized) return;
++  const operation = (async () => {
++    minimized = true;
++    stopGravity();
++    document.body.dataset.mode = "pill";
++    await windowHandle.setMinSize(overlayLogicalSize(PILL_SIZE.width, PILL_SIZE.height));
++    await windowHandle.setSize(overlayLogicalSize(PILL_SIZE.width, PILL_SIZE.height));
++  })();
++  resizePending = operation.finally(() => { if (resizePending === operation) resizePending = undefined; });
++  await operation;
++}
++
++/**
++ * Minimizing hides the fallback link, so it waits long enough for the link to
++ * be readable — and doesn't happen at all when the browser never opened, since
++ * that link is the user's only way through.
++ */
++const SIGN_IN_MINIMIZE_DELAY_MS = 2_500;
++
++async function beginSignInAndMinimize(): Promise<void> {
++  if (signInMinimizeTimer) clearTimeout(signInMinimizeTimer);
++  const { started, browserOpened } = await beginSignIn();
++  if (!started || !browserOpened) return;
++  signInMinimizeTimer = window.setTimeout(() => void minimize(), SIGN_IN_MINIMIZE_DELAY_MS);
++}
++
++async function restore(force = false): Promise<void> {
++  if (resizePending) await resizePending;
++  if (!minimized && !force) return;
++  const operation = (async () => {
++    minimized = false;
++    delete document.body.dataset.mode;
++    await windowHandle.setMinSize(overlayLogicalSize(MIN_SIZE.width, MIN_SIZE.height));
++    const size = expanded ? EXPANDED_SIZE : COMPACT_SIZE;
++    await windowHandle.setSize(overlayLogicalSize(size.width, size.height));
++    reopenGameOverIfFinished();
++    if (screen === "game" && !pauseReason) scheduleGravity();
++  })();
++  resizePending = operation.finally(() => { if (resizePending === operation) resizePending = undefined; });
++  await operation;
++}
++
++// The pill is both the drag handle and the reopen button, so a press only
++// becomes a drag once the pointer actually travels — and a drag swallows the
++// click that follows it.
++let pillPress: { x: number; y: number; dragged: boolean } | undefined;
++
++pillElement.addEventListener("mousedown", (event) => {
++  if (event.button !== 0) return;
++  pillPress = { x: event.clientX, y: event.clientY, dragged: false };
++});
++
++pillElement.addEventListener("mousemove", (event) => {
++  if (!pillPress || pillPress.dragged || event.buttons !== 1) return;
++  if (Math.hypot(event.clientX - pillPress.x, event.clientY - pillPress.y) < 4) return;
++  pillPress.dragged = true;
++  void windowHandle.startDragging();
++});
++
++pillElement.addEventListener("click", () => {
++  const dragged = pillPress?.dragged ?? false;
++  pillPress = undefined;
++  if (!dragged) void restore();
++});
++
++document.querySelector("#hide")!.addEventListener("click", () => void minimize());
++document.querySelector("#shutdown")!.addEventListener("click", () => {
++  endGame("abandoned", "client_closed");
++  void invoke("shutdown");
++});
++document.querySelector("#return-code")!.addEventListener("click", () => void minimize());
++continueButton.addEventListener("click", () => (pauseReason === "game-over" ? restartGame() : closePrompt()));
++menuButton.addEventListener("click", () => exitToMenu());
++howToPlayClose.addEventListener("click", () => closeHowToPlay());
++document.querySelector("#how-to-play-from-pause")?.addEventListener("click", () => openHowToPlay());
++resizeButton.addEventListener("click", async () => {
++  expanded = !expanded;
++  const size = expanded ? EXPANDED_SIZE : COMPACT_SIZE;
++  await windowHandle.setSize(overlayLogicalSize(size.width, size.height));
++  await windowHandle.center();
++  resizeButton.textContent = expanded ? "↙" : "↗";
++  resizeButton.setAttribute("aria-label", expanded ? "Compact overlay" : "Expand overlay");
++});
++
++async function handleSignOut(): Promise<void> {
++  endGame("abandoned", "user_quit");
++  try {
++    await signOut();
++  } catch (error) {
++    // Credentials survived deletion — stay signed in and surface the failure
++    // rather than falsely showing the user as signed out.
++    const message = error instanceof Error ? error.message : String(error);
++    const chip = document.querySelector<HTMLButtonElement>("#account-chip");
++    if (chip) chip.title = `Sign out failed: ${message}`;
++    return;
++  }
++  entry = undefined;
++  game = undefined;
++  stopGravity();
++  closePrompt();
++  drawGate();
++}
++
++function openSignOutPrompt(): void {
++  pauseReason = "signout";
++  stopGravity();
++  const prompt = document.getElementById("signout-prompt");
++  if (prompt) {
++    prompt.hidden = false;
++    document.getElementById("signout-cancel")?.focus();
++  }
++}
++
++function closeSignOutPrompt(): void {
++  pauseReason = undefined;
++  const prompt = document.getElementById("signout-prompt");
++  if (prompt) {
++    prompt.hidden = true;
++  }
++  if (screen === "game") {
++    scheduleGravity();
++  }
++}
++
++async function handleSignOutConfirm(): Promise<void> {
++  closeSignOutPrompt();
++  await handleSignOut();
++}
++
++// The persistent titlebar account chip: sign out confirmation when signed in, sign in when not.
+ document.querySelector("#account-chip")?.addEventListener("click", () => {
+-  if (!isSignedIn()) void beginSignIn();
++  if (isSignedIn()) {
++    openSignOutPrompt();
++  } else {
++    void beginSignInAndMinimize();
++  }
++});
++
++document.getElementById("signout-confirm")?.addEventListener("click", () => {
++  void handleSignOutConfirm();
++});
++
++document.getElementById("signout-cancel")?.addEventListener("click", () => {
++  closeSignOutPrompt();
+ });
+ // The gate's sign-in button is handled by the screen click delegation above,
+ // since it isn't in the DOM yet at bind time.
+@@ -1191,13 +1876,19 @@ void refreshUpdateBanner();
+ void loadSettings().then(async () => {
+   workerModel = await invoke<TraceV3Model | undefined>("read_worker_model_config").catch(() => undefined);
+   captureOverlayEvent("app.opened", { app_version: typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.2.0", platform: "overlay" });
++  const previewParams = new URLSearchParams(window.location.search);
++  const previewGame = previewParams.get("game");
+ 
+   if (!isTauri()) {
+     if (new URLSearchParams(window.location.search).get("scores") === "demo") localScores = PREVIEW_SCORES;
+     const saved = loadSavedGame();
+     savedGame = saved?.ownerId === "" ? saved : undefined;
+-    screen = "menu";
+-    drawMenu();
++    if (previewGame) {
++      launchFromRequest(previewGame, previewParams.get("variation") ?? "classic");
++    } else {
++      screen = "menu";
++      drawMenu();
++    }
+     refreshLocalScores();
+   } else {
+     void loadAuthSession().then((user) => {
+@@ -1208,9 +1899,11 @@ void loadSettings().then(async () => {
+         void invoke<string | null>("read_sync_error").then(setSyncError).catch(() => {});
+         refreshLocalScores();
+         recoverTraces();
++        if (previewGame) {
++          launchFromRequest(previewGame, previewParams.get("variation") ?? "classic");
++        }
+       }
+       else drawGate();
+     });
+   }
+ });
+-
+diff --git a/overlay/pause-state.ts b/overlay/pause-state.ts
+new file mode 100644
+index 0000000..5e6effe
+--- /dev/null
++++ b/overlay/pause-state.ts
+@@ -0,0 +1,44 @@
++/**
++ * Pure decisions about the overlay's pause/prompt state, kept out of `app.ts`
++ * so they can be unit tested without a DOM.
++ */
++
++export type PauseReason = "agent" | "game-over" | "signout" | "how-to-play" | undefined;
++
++export interface OverlayGameState {
++  /** Which screen the overlay is showing. */
++  screen: string;
++  /** Whether the active run has finished (`game.isOver()`). */
++  gameOver: boolean;
++  /** The prompt currently on screen, if any. */
++  pauseReason: PauseReason;
++}
++
++/**
++ * Returning to the agent from a finished run closes the game-over prompt so the
++ * hidden overlay isn't left mid-dialog, but the run itself is still over. When
++ * the overlay comes back into view the end-of-game UI has to be put back —
++ * otherwise the board reads as an in-progress run the player can no longer move
++ * (issue #141).
++ *
++ * Any other prompt wins: an agent pause or a sign-out confirmation is the more
++ * recent, more specific thing the player is being asked about.
++ */
++export function shouldReopenGameOver({ screen, gameOver, pauseReason }: OverlayGameState): boolean {
++  return screen === "game" && gameOver && pauseReason === undefined;
++}
++
++/**
++ * Whether a game's self-running clock (any auto-advancing `tickMs`) may keep
++ * ticking. Keyboard input is already blocked behind a prompt, but the timer
++ * was not: opening the agent pause dialog left the loop alive, so the game
++ * kept advancing (and could end) behind the dialog the player was reading.
++ *
++ * Every resume path funnels back through `scheduleGravity`, so this is the one
++ * place that decides, and it stays false for any prompt — an agent pause, the
++ * game-over card, the sign-out confirmation, or the How to Play guide.
++ */
++export function shouldScheduleTick({ screen, gameOver, pauseReason }: OverlayGameState): boolean {
++  return screen === "game" && !gameOver && pauseReason === undefined;
++}
++
+diff --git a/overlay/persistence.ts b/overlay/persistence.ts
+index 851304f..6326213 100644
+--- a/overlay/persistence.ts
++++ b/overlay/persistence.ts
+@@ -43,6 +43,22 @@ export function loadSavedGame(storage: Storage = localStorage): SavedGame | null
+   }
+ }
+ 
++export function saveGame(saved: SavedGame, storage: Storage = localStorage): void {
++  try {
++    storage.setItem(STORAGE_KEY, JSON.stringify(saved));
++  } catch {
++    // A full or unavailable browser store must not interrupt a game.
++  }
++}
++
++export function clearSavedGame(storage: Storage = localStorage): void {
++  try {
++    storage.removeItem(STORAGE_KEY);
++  } catch {
++    // Best-effort cleanup; an old completed save is harmless.
++  }
++}
++
+ /** Rebuild only actions that remain accepted by this version of the game. */
+ export function restoreGame(entry: GameEntry, saved: SavedGame): RestoredGame | null {
+   if (!entry.create || saved.gameId !== entry.id || saved.gameVersion !== entry.version) return null;
+@@ -55,3 +71,4 @@ export function restoreGame(entry: GameEntry, saved: SavedGame): RestoredGame |
+   }
+   return { game, actions };
+ }
++
+diff --git a/overlay/tauri-bridge.ts b/overlay/tauri-bridge.ts
+index 88eaa8a..5a29df3 100644
+--- a/overlay/tauri-bridge.ts
++++ b/overlay/tauri-bridge.ts
+@@ -8,6 +8,13 @@ import { getCurrentWindow, LogicalSize as TauriLogicalSize } from "@tauri-apps/a
+ 
+ export const PREVIEW_RESIZE_MESSAGE = "gamepigeon:preview-resize";
+ 
++export const COMPACT_SIZE = { width: 600, height: 850 } as const;
++export const EXPANDED_SIZE = { width: 830, height: 900 } as const;
++/** Collapsed handheld pill. The native frame matches it to avoid blocking the desktop. */
++export const PILL_SIZE = { width: 144, height: 48 } as const;
++/** The arcade's usable floor, restored whenever the pill expands again. */
++export const MIN_SIZE = { width: 500, height: 700 } as const;
++
+ type TauriWindow = ReturnType<typeof getCurrentWindow>;
+ 
+ export type OverlayWindow = Pick<
+@@ -105,3 +112,4 @@ export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Pr
+ export function overlayLogicalSize(width: number, height: number): LogicalSize | TauriLogicalSize {
+   return isTauri() ? new TauriLogicalSize(width, height) : new LogicalSize(width, height);
+ }
++

@@ -1,0 +1,30 @@
+[package]
+name = "gamepigeon-overlay"
+version = "0.2.0"
+description = "Native HTML overlay for Tui"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2.11.5", features = ["macos-private-api"] }
+tauri-plugin-single-instance = "2.4.3"
+# Blocking HTTP client for the one server-side call that resolves a session
+# token into a user (Cloudflare worker rejects the Tauri webview origin, so
+# this cannot happen from the frontend). Rustls avoids an OpenSSL dependency.
+ureq = { version = "2", features = ["json", "tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["macros", "sync", "time"] }
+# CSPRNG for the per-attempt callback nonce (already in the tree via rustls).
+getrandom = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3.2", features = ["NSGraphics", "NSResponder", "NSWindow"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

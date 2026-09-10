@@ -1,0 +1,1 @@
+- [Arena trace fixture regenerated](arena-trace-fixture-regenerated.md) — why the v3 benchmark fixture's checkpoint hashes changed on 2026-09-09, and why the issue-275 evidence trace can't replay.

@@ -1,0 +1,142 @@
+{
+    "id": "624b070b-d0f9-47da-a1a9-400e2ecde663",
+    "task_name": "forge/tui-gamepigeon-recording-trace-export-arena-trace-replay",
+    "trial_name": "forge-tui-gamepigeon-recording-t__zmv3Aft",
+    "trial_uri": "file:///tmp/specific-driver-oudt7ot2/trials/run-614ebf4a263e/forge-tui-gamepigeon-recording-t__zmv3Aft",
+    "task_id": {
+        "path": "/tmp/specific-driver-oudt7ot2/tasks/forge-tui-gamepigeon-recording-trace-export-arena-trace-replay"
+    },
+    "source": null,
+    "task_checksum": "70a83381659ce500d7f8abe34623ff7daa9c520883b16e2e89c8b9eea3d5fbc1",
+    "config": {
+        "task": {
+            "path": "/tmp/specific-driver-oudt7ot2/tasks/forge-tui-gamepigeon-recording-trace-export-arena-trace-replay",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "forge-tui-gamepigeon-recording-t__zmv3Aft",
+        "trials_dir": "/tmp/specific-driver-oudt7ot2/trials/run-614ebf4a263e",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": null,
+            "import_path": "specific_agents.claude_code_harness:BedrockClaudeCodeAgent",
+            "model_name": "bedrock/us.anthropic.claude-opus-5",
+            "n_concurrent": 6,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": 7200.0,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {
+                "reasoning_effort": "high",
+                "max_output_tokens": "128000",
+                "model_id": "us.anthropic.claude-opus-5",
+                "provider": "bedrock"
+            },
+            "mcp_servers": []
+        },
+        "environment": {
+            "type": null,
+            "import_path": "specific_sandbox.fargate:FargateEnvironment",
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": 4,
+            "override_memory_mb": 8192,
+            "override_storage_mb": 102400,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {
+                "cluster": "specific-runner",
+                "aws_region": "us-east-1",
+                "execution_role_arn": "arn:aws:iam::[REDACTED_AWS_ACCOUNT_ID]:role/specific-ecs-execution",
+                "task_role_arn": "arn:aws:iam::[REDACTED_AWS_ACCOUNT_ID]:role/specific-sandbox-task",
+                "subnets": [
+                    "subnet-0c9e52e5b7cf928a6",
+                    "subnet-0f4c08def45a6e152",
+                    "subnet-0bd02ad16a3df6d61",
+                    "subnet-03112c76fe14ada43",
+                    "subnet-0cdc3bb7b1eacb43c",
+                    "subnet-0687dee9d431ee2fa"
+                ],
+                "security_groups": [
+                    "sg-00be588d0ca635066"
+                ],
+                "init_container_image_uri": "[REDACTED_AWS_ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/specific/runtime-init@sha256:dd046f65a2a2d6c42603bf4ad9e859f889a01fcd75b2a4d1d2bbad39c5675bce",
+                "use_spot": false,
+                "cpu_units": 4096,
+                "storage_gib": 100,
+                "sandbox_idle_timeout_sec": 600,
+                "tags": {
+                    "specific:component": "sandbox",
+                    "specific:run-id": "run-614ebf4a263e",
+                    "specific:run-kind": "agent"
+                }
+            },
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "job_id": "26c70f0a-b336-41d4-bd04-c0a7e8fcfb00"
+    },
+    "agent_info": {
+        "name": "claude-code",
+        "version": "2.1.258",
+        "model_info": {
+            "name": "us.anthropic.claude-opus-5",
+            "provider": "bedrock"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 9959790,
+        "n_cache_tokens": 9782200,
+        "n_output_tokens": 75475,
+        "cost_usd": 8.217848750000002,
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 1
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-09-09T18:49:12.772944Z",
+    "finished_at": "2026-09-09T19:09:20.106827Z",
+    "environment_setup": {
+        "started_at": "2026-09-09T18:49:13.400988Z",
+        "finished_at": "2026-09-09T18:50:01.709971Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-09-09T18:50:01.710002Z",
+        "finished_at": "2026-09-09T18:50:13.239478Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-09-09T18:50:13.239633Z",
+        "finished_at": "2026-09-09T19:09:12.708445Z"
+    },
+    "verifier": {
+        "started_at": "2026-09-09T19:09:14.855098Z",
+        "finished_at": "2026-09-09T19:09:20.028536Z"
+    },
+    "step_results": null
+}

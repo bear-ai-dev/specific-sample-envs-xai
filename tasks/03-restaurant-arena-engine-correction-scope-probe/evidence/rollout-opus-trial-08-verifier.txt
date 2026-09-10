@@ -1,0 +1,12 @@
+Configuration: Opus 5 with Claude Code
+Trial: 08
+Source trial: forge-tui-gamepigeon-restaurant__z97bLRG
+Source run: run-0185146068d6
+Reward: 0
+Verifier: 13 passed, 1 failed
+Post-QA verdict: FAIR
+
+Failed check:
+- credits coordination alone when a worker relays an active correction's category without carrying it out
+
+Why it failed: A server relaying a chef correction was not given cross-role coordination credit.

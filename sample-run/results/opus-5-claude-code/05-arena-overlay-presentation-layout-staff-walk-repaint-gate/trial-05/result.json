@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-05",
+  "task": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate",
+  "trial_number": 5,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-c9bb94efbe6e",
+  "configuration": "opus-5-claude-code",
+  "model": "bedrock/us.anthropic.claude-opus-5",
+  "model_label": "Opus 5",
+  "route": "us.anthropic.claude-opus-5",
+  "provider": "Amazon Bedrock",
+  "harness": "Claude Code",
+  "agent_version": "2.1.258",
+  "reasoning_effort": "high",
+  "max_output_tokens": 128000,
+  "status": "complete",
+  "reward": 1,
+  "solved": true,
+  "source_trial": "forge-tui-gamepigeon-arena-overl__djjJCBB",
+  "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__djjJCBB",
+  "metrics": {
+    "wall_clock_seconds": 1294,
+    "output_tokens": 85089,
+    "step_count": 119
+  },
+  "trajectory": {
+    "path": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-05.json",
+    "sha256": "e672316719dffede67475fc9ca66cbe53f530b31e6d9e0b652a95727bc8cf6cd",
+    "redacted": true
+  }
+}

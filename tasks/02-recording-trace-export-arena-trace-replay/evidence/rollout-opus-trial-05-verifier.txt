@@ -1,0 +1,12 @@
+Configuration: Opus 5 with Claude Code
+Trial: 05
+Source trial: forge-tui-gamepigeon-recording-t__TMadjGG
+Source run: run-614ebf4a263e
+Reward: 0
+Verifier: 10 passed, 1 failed
+Post-QA verdict: FAIR
+
+Failed check:
+- captureTrace requires an explicit, valid runKind
+
+Why it failed: The trace pipeline worked, but it accepted a missing or invalid required runKind instead of rejecting it.

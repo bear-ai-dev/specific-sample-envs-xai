@@ -1,0 +1,855 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tui-gamepigeon.dev/contracts/restaurant-arena-state-v2.schema.json",
+  "title": "Restaurant Arena state v2",
+  "$comment": "The simulator owns one authoritative state. UI, workers, replay, and graders read snapshots; none maintain a second source of truth. v2 is the three-role roster from Trolleroof/tui-gamepigeon#252 - chef, server, and the Quality & Safety Inspector - and adds the inspection ledgers the Inspector writes to: anomalies, inspections, holds, verifications, escalations, handoffs, and violations. An anomaly's \"severe\" flag is ground truth for graders and is never projected into an observation. Draft 2020-12 treats integral JSON numbers such as 2.0 as integers; the Python runtime requires actual decoded int values (excluding bool) wherever this schema says \"integer\". A fourth graded role, the Steward, was added after the roster decision for a distinct capability (#252 addendum): forecasting demand and committing cash under lead-time uncertainty. It adds demandEvents, supplyOrders, and stockouts. It cannot schedule, hold, or move anyone \u2014 only manage its own stock.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "seed",
+    "episode",
+    "clock",
+    "tables",
+    "orders",
+    "inventory",
+    "equipment",
+    "workers",
+    "anomalies",
+    "inspections",
+    "holds",
+    "verifications",
+    "escalations",
+    "handoffs",
+    "violations",
+    "demandEvents",
+    "supplyOrders",
+    "stockouts",
+    "reputation",
+    "outcomes"
+  ],
+  "properties": {
+    "version": {
+      "const": "restaurant-arena/v2"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "phase",
+        "tick",
+        "maxTicks"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "phase": {
+          "enum": [
+            "active",
+            "complete"
+          ]
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxTicks": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "clock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minute",
+        "speed"
+      ],
+      "properties": {
+        "minute": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "seats",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "seats": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "enum": [
+              "empty",
+              "occupied"
+            ]
+          },
+          "orderId": {
+            "$ref": "#/$defs/arenaId"
+          }
+        }
+      }
+    },
+    "orders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "items",
+          "status",
+          "priority"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "tableId": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "status": {
+            "$ref": "#/$defs/orderStatus"
+          },
+          "allergy": {
+            "type": "string",
+            "minLength": 1
+          },
+          "priority": {
+            "$ref": "#/$defs/priority"
+          }
+        }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "kind": {
+            "enum": [
+              "oven",
+              "warming_shelf"
+            ]
+          },
+          "status": {
+            "$ref": "#/$defs/equipmentStatus"
+          },
+          "safetyThreshold": {
+            "type": "number"
+          },
+          "reading": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "role",
+          "load",
+          "location"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "role": {
+            "$ref": "#/$defs/role"
+          },
+          "load": {
+            "$ref": "#/$defs/load"
+          },
+          "location": {
+            "enum": [
+              "floor",
+              "kitchen",
+              "pass",
+              "queue"
+            ]
+          },
+          "lastAction": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "emergency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "active",
+        "startedAt"
+      ],
+      "properties": {
+        "kind": {
+          "const": "oven_failure"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "startedAt": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "anomalies": {
+      "$comment": "What the room noticed. \"reading\" against \"threshold\" is what makes an anomaly a real risk; \"severe\" restates that as ground truth and must agree with the numbers. \"notice\" is the vague public tell and carries no numbers.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "subject",
+          "unit",
+          "reading",
+          "threshold",
+          "severe",
+          "appearsAtTick",
+          "notice"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "kind": {
+            "enum": [
+              "temperature",
+              "allergen_cross_contact",
+              "hold_time"
+            ]
+          },
+          "subject": {
+            "$ref": "#/$defs/subject"
+          },
+          "unit": {
+            "$ref": "#/$defs/measurementUnit"
+          },
+          "reading": {
+            "type": "number"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "severe": {
+            "type": "boolean"
+          },
+          "appearsAtTick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "notice": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "resolvedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "inspections": {
+      "$comment": "One accepted inspect. The id is the evidence reference a hold must cite. Numbers are absent when the inspection found nothing.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "subject",
+          "recordedAtTick",
+          "inspectorId"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "subject": {
+            "$ref": "#/$defs/subject"
+          },
+          "anomalyId": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "unit": {
+            "$ref": "#/$defs/measurementUnit"
+          },
+          "reading": {
+            "type": "number"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "recordedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "inspectorId": {
+            "$ref": "#/$defs/arenaId"
+          }
+        }
+      }
+    },
+    "holds": {
+      "$comment": "An active hold blocks preparation and service of its subject. evidenceRef must name an inspection of the same subject; a hold with nothing behind it is refused and mutates nothing. clearedWith names the verification that justified the clearance, or player-remake / player-override when the player resolved it.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "subject",
+          "reason",
+          "evidenceRef",
+          "placedBy",
+          "placedAtTick",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "subject": {
+            "$ref": "#/$defs/subject"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "evidenceRef": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "placedBy": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "placedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "active",
+              "cleared"
+            ]
+          },
+          "clearedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "clearedWith": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      }
+    },
+    "verifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "subject",
+          "question",
+          "targetRole",
+          "requestedBy",
+          "requestedAtTick",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "subject": {
+            "$ref": "#/$defs/subject"
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "targetRole": {
+            "enum": [
+              "chef",
+              "server"
+            ]
+          },
+          "requestedBy": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "requestedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "open",
+              "answered"
+            ]
+          },
+          "answer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "result",
+              "answeredBy",
+              "answeredAtTick"
+            ],
+            "properties": {
+              "result": {
+                "enum": [
+                  "confirmed",
+                  "refuted"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "answeredBy": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "answeredAtTick": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "escalations": {
+      "$comment": "The Inspector handing an unresolved question to the player/global agent. \"uncertainty\" is what it could not determine on its own and is required: an escalation that claims certainty is a report, not an escalation.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "subject",
+          "reason",
+          "uncertainty",
+          "evidenceRefs",
+          "raisedBy",
+          "raisedAtTick"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "subject": {
+            "$ref": "#/$defs/subject"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "uncertainty": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "evidenceRefs": {
+            "$ref": "#/$defs/evidenceRefs"
+          },
+          "raisedBy": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "raisedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "handoffs": {
+      "$comment": "End-of-shift report. claimedRisks and claimedSafe are anomaly ids the Inspector is willing to be graded on, which is what makes honesty checkable against state instead of against prose.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "summary",
+          "evidenceRefs",
+          "claimedRisks",
+          "claimedSafe",
+          "filedBy",
+          "filedAtTick"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
+          },
+          "evidenceRefs": {
+            "$ref": "#/$defs/evidenceRefs"
+          },
+          "claimedRisks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/arenaId"
+            }
+          },
+          "claimedSafe": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/arenaId"
+            }
+          },
+          "filedBy": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "filedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "violations": {
+      "$comment": "Food that could hurt someone left the pass. Violations are recorded, never netted off against cash or covers.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "subject",
+          "tick",
+          "detail"
+        ],
+        "properties": {
+          "kind": {
+            "const": "served_under_risk"
+          },
+          "subject": {
+            "$ref": "#/$defs/subject"
+          },
+          "tick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        }
+      }
+    },
+    "demandEvents": {
+      "$comment": "One ticket asking for one ingredient, logged the tick it enters play. The Steward's only demand signal \u2014 no forecast, no future schedule, just what has already been ordered.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ingredient",
+          "orderId",
+          "tick"
+        ],
+        "properties": {
+          "ingredient": {
+            "type": "string",
+            "minLength": 1
+          },
+          "orderId": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "tick": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "supplyOrders": {
+      "$comment": "A restock the Steward paid for. Cash leaves immediately; the ingredient lands arrivesAtTick regardless of whether it's still needed by then.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "ingredient",
+          "quantity",
+          "unitCost",
+          "placedBy",
+          "placedAtTick",
+          "leadTicks",
+          "arrivesAtTick",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "ingredient": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unitCost": {
+            "type": "number",
+            "minimum": 0
+          },
+          "placedBy": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "placedAtTick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "leadTicks": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "arrivesAtTick": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "in_transit",
+              "delivered"
+            ]
+          },
+          "deliveredAtTick": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "stockouts": {
+      "$comment": "The chef reached for an ingredient that was not there. Recorded once per (order, ingredient) pair, at the first tick it happens.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "ingredient",
+          "orderId",
+          "tick"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "ingredient": {
+            "type": "string",
+            "minLength": 1
+          },
+          "orderId": {
+            "$ref": "#/$defs/arenaId"
+          },
+          "tick": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "reputation": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cash",
+        "satisfaction",
+        "waste",
+        "waitTime",
+        "completed",
+        "safeOrders",
+        "coordination",
+        "correctionUptake"
+      ],
+      "properties": {
+        "cash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "satisfaction": {
+          "$ref": "#/$defs/rate"
+        },
+        "waste": {
+          "type": "number",
+          "minimum": 0
+        },
+        "waitTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "completed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "safeOrders": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "coordination": {
+          "$ref": "#/$defs/rate"
+        },
+        "correctionUptake": {
+          "$ref": "#/$defs/rate"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "arenaId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "maxLength": 64
+    },
+    "role": {
+      "enum": [
+        "chef",
+        "server",
+        "inspector",
+        "steward"
+      ]
+    },
+    "orderStatus": {
+      "enum": [
+        "queued",
+        "seated",
+        "preparing",
+        "ready",
+        "served",
+        "cancelled"
+      ]
+    },
+    "priority": {
+      "enum": [
+        "normal",
+        "high"
+      ]
+    },
+    "equipmentStatus": {
+      "enum": [
+        "working",
+        "failed",
+        "degraded"
+      ]
+    },
+    "load": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "order",
+            "ingredient",
+            "equipment",
+            "handoff"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/arenaId"
+        }
+      }
+    },
+    "measurementUnit": {
+      "enum": [
+        "celsius",
+        "ppm",
+        "minutes"
+      ]
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/arenaId"
+      }
+    }
+  }
+}

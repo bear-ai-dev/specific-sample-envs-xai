@@ -1,0 +1,940 @@
+904	
+905	  /** Ticket rail: every live order as a card you can click to rush. */
+906	  private drawTickets(g: Phaser.GameObjects.Graphics, layout: RestaurantArenaLayout): void {
+907	    const zone = layout.tickets;
+908	    const compact = layout.compact;
+909	    g.fillStyle(COLORS.panel);
+910	    g.fillRoundedRect(zone.x, zone.y, zone.width, zone.height, 4);
+911	    this.add.text(zone.x + 6, zone.y + 4, "TICKETS", {
+912	      color: "#f2cc5c",
+913	      fontFamily: "Arial Narrow, sans-serif",
+914	      fontSize: compact ? this.fs(7) : this.fs(9),
+915	      fontStyle: "bold",
+916	    });
+917	
+918	    const live = this.state.orders.filter((order) => order.status !== "served" && order.status !== "cancelled");
+919	    const top = zone.y + (compact ? 14 : 17);
+920	    const cardHeight = zone.height - (top - zone.y) - 4;
+921	
+922	    if (live.length === 0) {
+923	      this.add
+924	        .text(zone.x + zone.width / 2, top + cardHeight / 2, "No tickets", {
+925	          color: "#8d8378",
+926	          fontFamily: MONO,
+927	          fontSize: compact ? this.fs(7) : this.fs(9),
+928	        })
+929	        .setOrigin(0.5);
+930	      return;
+931	    }
+932	
+933	    const gap = 4;
+934	    const maxCards = Math.max(1, Math.min(live.length, Math.floor((zone.width - 8) / (compact ? 74 : 92))));
+935	    const cardWidth = (zone.width - 8 - gap * (maxCards - 1)) / maxCards;
+936	
+937	    live.slice(0, maxCards).forEach((order, index) => {
+938	      const x = zone.x + 4 + index * (cardWidth + gap);
+939	      const rect = { x, y: top, width: cardWidth, height: cardHeight };
+940	      g.fillStyle(COLORS.ticket);
+941	      g.fillRoundedRect(x, top, cardWidth, cardHeight, 3);
+942	      if (order.priority === "high") {
+943	        g.lineStyle(2, COLORS.alert, 0.9);
+944	        g.strokeRoundedRect(x, top, cardWidth, cardHeight, 3);
+945	      }
+946	
+947	      const table = (order.tableId ?? order.id).replace("table-", "T").replace(/order-x?/, "#");
+948	      this.add.text(x + 4, top + 3, table, {
+949	        color: "#2b2118",
+950	        fontFamily: MONO,
+951	        fontSize: compact ? this.fs(8) : this.fs(10),
+952	        fontStyle: "bold",
+953	      });
+954	      this.add
+955	        .text(x + cardWidth - 4, top + 3, order.status.toUpperCase(), {
+956	          color: "#ffffff",
+957	          backgroundColor: hex(STATUS_COLORS[order.status]),
+958	          fontFamily: MONO,
+959	          fontSize: compact ? this.fs(5) : this.fs(6),
+960	          fontStyle: "bold",
+961	          padding: { x: 2, y: 1 },
+962	        })
+963	        .setOrigin(1, 0);
+964	      this.add.text(x + 4, top + (compact ? 15 : 19), order.items.join(" + ") || "—", {
+965	        color: "#4f4136",
+966	        fontFamily: MONO,
+967	        fontSize: compact ? this.fs(6) : this.fs(8),
+968	      });
+969	
+970	      if (order.allergy) {
+971	        this.add
+972	          .text(x + 4, top + cardHeight - 3, `${order.allergy.toUpperCase()} ALLERGY`, {
+973	            color: "#ffffff",
+974	            backgroundColor: "#c73535",
+975	            fontFamily: MONO,
+976	            fontSize: compact ? this.fs(5) : this.fs(6),
+977	            fontStyle: "bold",
+978	            padding: { x: 2, y: 1 },
+979	          })
+980	          .setOrigin(0, 1);
+981	      } else if (order.priority === "high") {
+982	        this.add
+983	          .text(x + 4, top + cardHeight - 3, "RUSHED", {
+984	            color: "#ffffff",
+985	            backgroundColor: "#e08b2c",
+986	            fontFamily: MONO,
+987	            fontSize: compact ? this.fs(5) : this.fs(6),
+988	            fontStyle: "bold",
+989	            padding: { x: 2, y: 1 },
+990	          })
+991	          .setOrigin(0, 1);
+992	      }
+993	
+994	      const tableIndex = Number((order.tableId?.match(/\d+/) ?? ["0"])[0]);
+995	      if (order.priority !== "high" && tableIndex >= 1 && tableIndex <= 3) {
+996	        this.hotspot(rect, `rush_table_${tableIndex}`, "Rush this ticket");
+997	      } else if (order.allergy) {
+998	        this.hotspot(rect, "prioritize_allergy", "Prioritize allergy ticket");
+999	      }
+1000	    });
+1001	
+1002	    if (live.length > maxCards) {
+1003	      this.add
+1004	        .text(zone.x + zone.width - 5, zone.y + 5, `+${live.length - maxCards}`, {
+1005	          color: "#f2cc5c",
+1006	          fontFamily: MONO,
+1007	          fontSize: compact ? this.fs(6) : this.fs(8),
+1008	          fontStyle: "bold",
+1009	        })
+1010	        .setOrigin(1, 0);
+1011	    }
+1012	  }
+1013	
+1014	  /**
+1015	   * The service log. Watching the staff think is what makes their behaviour
+1016	   * legible — and a legible floor is what makes the player's calls informed.
+1017	   */
+1018	  private drawFeed(g: Phaser.GameObjects.Graphics, layout: RestaurantArenaLayout): void {
+1019	    const zone = layout.feed;
+1020	    const compact = layout.compact;
+1021	    g.fillStyle(COLORS.panel);
+1022	    g.fillRoundedRect(zone.x, zone.y, zone.width, zone.height, 4);
+1023	    this.add.text(zone.x + 6, zone.y + 4, "EVENT FEED", {
+1024	      color: "#f2cc5c",
+1025	      fontFamily: "Arial Narrow, sans-serif",
+1026	      fontSize: compact ? this.fs(7) : this.fs(9),
+1027	      fontStyle: "bold",
+1028	    });
+1029	
+1030	    // Keep the narrative spine visible while the activity log scrolls past it.
+1031	    // This is deliberately fixed-order UI, not inferred from whichever feed
+1032	    // entries happen to be in the tail of a long shift.
+1033	    const milestoneTop = zone.y + (compact ? 14 : 18);
+1034	    const milestone = this.add.text(zone.x + 6, milestoneTop, milestoneFeedText(), {
+1035	      color: "#c9bdae",
+1036	      fontFamily: MONO,
+1037	      fontSize: compact ? this.fs(5) : this.fs(6),
+1038	      fontStyle: "bold",
+1039	      wordWrap: { width: zone.width - 12 },
+1040	      maxLines: layout.feedBeside ? 2 : 1,
+1041	      lineSpacing: compact ? 1 : 2,
+1042	    });
+1043	    void milestone;
+1044	
+1045	    const entries = this.state.feed ?? [];
+1046	    const top = milestoneTop + milestone.height + (compact ? 2 : 4);
+1047	    // The side rail is narrow but tall, so entries there get a second line
+1048	    // rather than being cut off mid-sentence.
+1049	    const bodyLines = layout.feedBeside ? 2 : 1;
+1050	    const lineHeight = (compact ? 15 : 18) + (bodyLines - 1) * (compact ? 7 : 9);
+1051	    const rows = Math.max(1, Math.floor((zone.height - (top - zone.y) - 2) / lineHeight));
+1052	    const shown = entries.slice(-rows);
+1053	
+1054	    if (shown.length === 0) {
+1055	      this.add.text(zone.x + 6, top + 2, "Press Play to open.", {
+1056	        color: "#8d8378",
+1057	        fontFamily: MONO,
+1058	        fontSize: compact ? this.fs(7) : this.fs(9),
+1059	      });
+1060	      return;
+1061	    }
+1062	
+1063	    shown.forEach((entry, index) => {
+1064	      const y = top + index * lineHeight;
+1065	      const color = VOICE_COLORS[entry.voice] ?? "#c9bdae";
+1066	      // The player's own calls get a left accent rule and full-strength body
+1067	      // text, so "what I decided" separates from "what the staff said" at a
+1068	      // glance rather than only by reading the name (#304). The feed is the
+1069	      // record of the shift; a manager scanning it back should be able to
+1070	      // find their own decisions without parsing every line.
+1071	      const mine = entry.voice === "you";
+1072	      const textX = zone.x + 6 + (mine ? 4 : 0);
+1073	      if (mine) {
+1074	        g.fillStyle(0x7ddc9f);
+1075	        g.fillRoundedRect(zone.x + 3, y, 2, lineHeight - (compact ? 3 : 4), 1);
+1076	      }
+1077	      const head = this.add.text(textX, y, `${entry.clock} ${entry.who}`, {
+1078	        color,
+1079	        fontFamily: MONO,
+1080	        fontSize: compact ? this.fs(6) : this.fs(7),
+1081	        fontStyle: "bold",
+1082	      });
+1083	      this.add.text(textX, y + (compact ? 7 : 8), entry.text, {
+1084	        color: entry.kind === "thought" ? "#9a8f82" : mine ? "#fff3d6" : "#e8ddcc",
+1085	        fontFamily: MONO,
+1086	        fontSize: compact ? this.fs(6) : this.fs(8),
+1087	        fontStyle: entry.kind === "thought" ? "italic" : "normal",
+1088	        wordWrap: { width: zone.width - 12 - (mine ? 4 : 0) },
+1089	        maxLines: bodyLines,
+1090	      });
+1091	      void head;
+1092	    });
+1093	  }
+1094	
+1095	  // ── Staff avatars ────────────────────────────────────────────────────
+1096	
+1097	  private visualLocation(worker: RestaurantArenaState["workers"][number]): Location {
+1098	    // Holding the door plants the host on the stand so the lock is a person,
+1099	    // not a chip. A host already assigned into the kitchen stays there.
+1100	    if (
+1101	      worker.role === "host" &&
+1102	      this.state.seatingHeld &&
+1103	      (worker.location === "queue" || worker.location === "floor")
+1104	    ) {
+1105	      return "queue";
+1106	    }
+1107	    return worker.location;
+1108	  }
+1109	
+1110	  private stackedSlot(location: Location, offset: number, layout: RestaurantArenaLayout): ArenaPoint {
+1111	    const step = layout.compact ? 17 : this.px(22);
+1112	    const slot = layout.waypoints[location];
+1113	    // Staff at the door stand *beside* the host stand rather than on top of it:
+1114	    // the stand carries the hold-the-door control, and a token parked over it
+1115	    // would eat the click.
+1116	    if (location !== "queue") return { x: slot.x + offset * step, y: slot.y };
+1117	    const lead = layout.doorStand.width / 2 + step / 2;
+1118	    const room = layout.door.x + layout.door.width - step / 2;
+1119	    return { x: Math.min(slot.x + lead + offset * step, room), y: slot.y };
+1120	  }
+1121	
+1122	  private drawWorkers(layout: RestaurantArenaLayout): void {
+1123	    const compact = layout.compact;
+1124	    const offsets = new Map<Location, number>();
+1125	    this.staffTokens.clear();
+1126	
+1127	    for (const worker of this.state.workers) {
+1128	      const location = this.visualLocation(worker);
+1129	      const offset = offsets.get(location) ?? 0;
+1130	      offsets.set(location, offset + 1);
+1131	      const slot = this.stackedSlot(location, offset, layout);
+1132	      // The walker owns the pixel position; the slot is only where it is
+1133	      // *heading*. A repaint mid-walk (or mid-drag) therefore rebuilds the
+1134	      // token where the person currently is, not back at their station.
+1135	      const walker = this.walker(worker.role, location, slot);
+1136	      if (walker.node !== location || (!walker.walking && !walker.dragging && this.awayFrom(walker, slot))) {
+1137	        walker.setTarget(location, this.slotWaypoints(layout, location, slot), layout.spineY);
+1138	      }
+1139	
+1140	      const token = this.buildAvatar(walker.x, walker.y, worker.role, worker.load, compact);
+1141	      // Somebody on the move doesn't idle-bob: that tween owns the token's y,
+1142	      // and `update` is about to own it instead.
+1143	      if (walker.walking || walker.dragging) this.tweens.killTweensOf(token);
+1144	      this.staffTokens.set(worker.role, token);
+1145	      const heldHost = worker.role === "host" && Boolean(this.state.seatingHeld) && location === "queue";
+1146	      const status = heldHost ? "acting" : (this.workerStatuses.get(worker.role) ?? this.workerStatus(worker));
+1147	      this.drawWorkerBadge(token, status, compact, heldHost);
+1148	      this.drawSpeechBubble(token, worker.role, compact);
+1149	      this.makeDraggable(token, worker.role, location, layout);
+1150	    }
+1151	  }
+1152	
+1153	  private walker(role: Role, location: Location, slot: ArenaPoint): StaffWalker {
+1154	    const existing = this.walkers.get(role);
+1155	    if (existing) return existing;
+1156	    const walker = new StaffWalker(location, slot);
+1157	    this.walkers.set(role, walker);
+1158	    return walker;
+1159	  }
+1160	
+1161	  private awayFrom(walker: StaffWalker, slot: ArenaPoint): boolean {
+1162	    return Math.hypot(walker.x - slot.x, walker.y - slot.y) > 1;
+1163	  }
+1164	
+1165	  /**
+1166	   * The walk graph's waypoints, with this walker's own stacked slot standing in
+1167	   * for the destination — two cooks in the same kitchen shouldn't finish their
+1168	   * walks standing inside each other.
+1169	   */
+1170	  private slotWaypoints(
+1171	    layout: RestaurantArenaLayout,
+1172	    location: Location,
+1173	    slot: ArenaPoint,
+1174	  ): Record<Location, ArenaPoint> {
+1175	    return { ...layout.waypoints, [location]: slot };
+1176	  }
+1177	
+1178	  /**
+1179	   * Drag a member of staff onto another zone to reassign them — the same
+1180	   * `assign_<role>_<location>` action the keyboard and the agents use, except
+1181	   * you point at where you want them.
+1182	   *
+1183	   * Dropping is the only part that talks to the game. Everything before it is
+1184	   * local: the token follows the pointer, the zone under it lights up, and any
+1185	   * repaint the shift asks for in the meantime is held by the gate so the thing
+1186	   * being dragged is still there to be dropped.
+1187	   */
+1188	  private makeDraggable(
+1189	    token: Phaser.GameObjects.Container,
+1190	    role: Role,
+1191	    from: Location,
+1192	    layout: RestaurantArenaLayout,
+1193	  ): void {
+1194	    // A grab box a bit taller than the figure, so the badge over their head and
+1195	    // the name tag under their feet are part of the person, not dead space.
+1196	    const reach = this.px(layout.compact ? 26 : 30);
+1197	    token.setInteractive(
+1198	      new Phaser.Geom.Rectangle(-reach / 2, -reach * 0.85, reach, reach * 1.5),
+1199	      Phaser.Geom.Rectangle.Contains,
+1200	    );
+1201	    this.input.setDraggable(token);
+1202	    // "You can pick this person up" has to be discoverable without a legend.
+1203	    if (token.input) token.input.cursor = "grab";
+1204	
+1205	    const halo = this.add.rectangle(0, 0, 0, 0).setOrigin(0, 0).setDepth(19).setVisible(false);
+1206	    halo.setStrokeStyle(2, COLORS.pass, 0.95);
+1207	
+1208	    token.on("dragstart", () => {
+1209	      this.repaintGate.beginDrag();
+1210	      this.draggingRole = role;
+1211	      const walker = this.walkers.get(role);
+1212	      if (walker) walker.dragging = true;
+1213	      // The idle bob is a tween on this container's y; it would fight the
+1214	      // pointer for the token.
+1215	      this.tweens.killTweensOf(token);
+1216	      token.setDepth(40);
+1217	      token.setAlpha(0.92);
+1218	    });
+1219	
+1220	    token.on("drag", (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+1221	      token.setPosition(dragX, dragY);
+1222	      const walker = this.walkers.get(role);
+1223	      if (walker) {
+1224	        walker.x = dragX;
+1225	        walker.y = dragY;
+1226	      }
+1227	      const drop = this.zoneAt(dragX, dragY, layout);
+1228	      const rect = drop && drop !== from ? this.zoneRect(drop, layout) : undefined;
+1229	      if (rect) {
+1230	        halo.setPosition(rect.x, rect.y).setSize(rect.width, rect.height).setVisible(true);
+1231	      } else {
+1232	        halo.setVisible(false);
+1233	      }
+1234	    });
+1235	
+1236	    token.on("dragend", () => {
+1237	      halo.setVisible(false);
+1238	      token.setAlpha(1);
+1239	      token.setDepth(20);
+1240	      const walker = this.walkers.get(role);
+1241	      if (walker) walker.dragging = false;
+1242	      this.draggingRole = undefined;
+1243	      const drop = this.zoneAt(token.x, token.y, layout);
+1244	      const reassigned = drop !== undefined && drop !== from;
+1245	      if (reassigned) {
+1246	        // Left standing where they were dropped, in the zone they were dropped
+1247	        // into, so the walk that follows is the short one onto their slot
+1248	        // rather than a march back out of the room they just left.
+1249	        walker?.snap({ x: token.x, y: token.y }, drop);
+1250	        this.onAction(`assign_${role}_${drop}`);
+1251	      }
+1252	      // Whatever the shift asked for while the token was in the air happens
+1253	      // now — including the repaint for the assignment just dispatched.
+1254	      const owed = this.repaintGate.endDrag();
+1255	      if (owed || reassigned) this.paint();
+1256	      // Dropped where they already were, or off the floor entirely: they walk
+1257	      // back to their station rather than staying stuck under the cursor.
+1258	      else this.walkHome(role, from, layout);
+1259	    });
+1260	  }
+1261	
+1262	  /** Which zone a pixel belongs to, or `undefined` for none of them. */
+1263	  private zoneAt(x: number, y: number, layout: RestaurantArenaLayout): Location | undefined {
+1264	    const zones: [Location, ArenaRect][] = [
+1265	      ["queue", layout.door],
+1266	      ["kitchen", layout.kitchen],
+1267	      ["pass", layout.pass],
+1268	      ["floor", layout.dining],
+1269	    ];
+1270	    for (const [location, rect] of zones) {
+1271	      if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return location;
+1272	    }
+1273	    return undefined;
+1274	  }
+1275	
+1276	  private zoneRect(location: Location, layout: RestaurantArenaLayout): ArenaRect {
+1277	    if (location === "kitchen") return layout.kitchen;
+1278	    if (location === "pass") return layout.pass;
+1279	    if (location === "queue") return layout.door;
+1280	    return layout.dining;
+1281	  }
+1282	
+1283	  /** Send someone back to the station they are still assigned to. */
+1284	  private walkHome(role: Role, location: Location, layout: RestaurantArenaLayout): void {
+1285	    const walker = this.walkers.get(role);
+1286	    if (!walker) return;
+1287	    const slot = this.stackedSlot(location, this.stackOffset(role, location), layout);
+1288	    walker.setTarget(location, this.slotWaypoints(layout, location, slot), layout.spineY);
+1289	  }
+1290	
+1291	  /** This role's place in the queue of staff standing in the same zone. */
+1292	  private stackOffset(role: Role, location: Location): number {
+1293	    let offset = 0;
+1294	    for (const worker of this.state.workers) {
+1295	      if (worker.role === role) return offset;
+1296	      if (this.visualLocation(worker) === location) offset += 1;
+1297	    }
+1298	    return offset;
+1299	  }
+1300	
+1301	  /**
+1302	   * Walks in progress. Tokens are moved in place rather than repainted: a walk
+1303	   * is sixty frames of motion, and repainting the floor for each of them would
+1304	   * throw away every hotspot under the player's cursor sixty times a second.
+1305	   */
+1306	  update(_time: number, delta: number): void {
+1307	    const layout = this.layout;
+1308	    if (!layout) return;
+1309	    // Walks run at the shift's own speed, so 4× service looks like 4× service.
+1310	    // A stopped clock still lets a walk finish, though: a token left frozen
+1311	    // halfway across the floor — after a drag during a decision, say — reads as
+1312	    // a bug rather than as a pause.
+1313	    const speed = this.running ? (this.state.sim?.speed ?? 1) : 1;
+1314	    for (const [role, walker] of this.walkers) {
+1315	      const token = this.staffTokens.get(role);
+1316	      if (role === this.draggingRole) continue;
+1317	      const before = walker.walking;
+1318	      if (!walker.step(delta, speed)) {
+1319	        // The hop that just landed leaves the token parked; give it its idle
+1320	        // breathing back so it doesn't read as frozen.
+1321	        if (before && !walker.walking && token) this.startIdleBob(token, walker.y, role);
+1322	        continue;
+1323	      }
+1324	      token?.setPosition(walker.x, walker.y);
+1325	      const figure = token?.getByName("figure");
+1326	      if (figure && "setScale" in figure) {
+1327	        (figure as Phaser.GameObjects.Container).setScale(walker.facing, 1);
+1328	      }
+1329	    }
+1330	  }
+1331	
+1332	  /**
+1333	   * The service log tells the same story in a rail nobody has to be
+1334	   * looking at — a bubble over the actual person doing the thinking is
+1335	   * what makes the floor read as staffed by someone, not just occupied.
+1336	   */
+1337	  private latestLineFor(role: Role): string | undefined {
+1338	    const feed = this.state.feed;
+1339	    if (!feed || feed.length === 0) return undefined;
+1340	    for (let i = feed.length - 1; i >= Math.max(0, feed.length - 6); i--) {
+1341	      const entry = feed[i]!;
+1342	      if (entry.voice === role && (entry.kind === "thought" || entry.kind === "action")) return entry.text;
+1343	    }
+1344	    return undefined;
+1345	  }
+1346	
+1347	  private drawSpeechBubble(token: Phaser.GameObjects.Container, role: Role, compact: boolean): void {
+1348	    const line = this.latestLineFor(role);
+1349	    if (!line) return;
+1350	    const trimmed = line.length > 46 ? `${line.slice(0, 44)}…` : line;
+1351	    const label = this.add.text(0, 0, trimmed, {
+1352	      color: "#2b2118",
+1353	      fontFamily: MONO,
+1354	      fontSize: compact ? this.fs(6) : this.fs(7),
+1355	      wordWrap: { width: compact ? 100 : this.px(130) },
+1356	      maxLines: 2,
+1357	      align: "center",
+1358	    });
+1359	    const padX = this.px(5);
+1360	    const padY = this.px(4);
+1361	    const w = label.width + padX * 2;
+1362	    const h = label.height + padY * 2;
+1363	    const localX = Math.min(Math.max(-w / 2, 4 - token.x), this.cssWidth - w - 4 - token.x);
+1364	    const bubbleY = -(compact ? 20 : this.px(26)) - h;
+1365	    const bg = this.add.rectangle(0, 0, w, h, 0xfff3d6, 0.96).setOrigin(0, 0);
+1366	    bg.setStrokeStyle(1, ROLE_COLORS[role], 0.9);
+1367	    label.setPosition(padX, padY);
+1368	    const tail = this.add.triangle(w / 2 - localX, h + 4, -4, 0, 4, 0, 0, 5, 0xfff3d6).setOrigin(0.5, 0);
+1369	    const bubble = this.add.container(localX, bubbleY, [bg, label, tail]);
+1370	    bubble.setAlpha(0.97);
+1371	    token.add(bubble);
+1372	  }
+1373	
+1374	  /**
+1375	   * Pixel staff figure shared by floor tokens and the pre-shift roster.
+1376	   */
+1377	  private avatarFigure(role: Role, unit: number): Phaser.GameObjects.GameObject[] {
+1378	    const color = ROLE_COLORS[role];
+1379	    const parts: Phaser.GameObjects.GameObject[] = [];
+1380	
+1381	    const shoulderY = unit * 2;
+1382	    const shoulderX = unit * 2.9;
+1383	    const shoulderR = unit * 1.15;
+1384	    for (const side of [-1, 1]) {
+1385	      const shoulder = this.add.circle(shoulderX * side, shoulderY, shoulderR, color);
+1386	      shoulder.setStrokeStyle(1, 0x2b2118, 0.6);
+1387	      parts.push(shoulder);
+1388	    }
+1389	
+1390	    const bodyW = unit * 5;
+1391	    const bodyH = unit * 5;
+1392	    const body = this.add.graphics();
+1393	    body.fillStyle(color, 1);
+1394	    body.fillRoundedRect(-bodyW / 2, unit * 1.5 - bodyH / 2, bodyW, bodyH, unit * 1.5);
+1395	    body.lineStyle(1, 0x2b2118, 0.75);
+1396	    body.strokeRoundedRect(-bodyW / 2, unit * 1.5 - bodyH / 2, bodyW, bodyH, unit * 1.5);
+1397	    parts.push(body);
+1398	    if (role === "chef" || role === "supply_lead" || role === "expediter") {
+1399	      parts.push(this.add.rectangle(0, unit * 2.6, unit * 3, unit * 2.6, 0xfff3d6, 0.92).setOrigin(0.5));
+1400	    }
+1401	    if (role === "host") {
+1402	      // Bun behind the crown so the face is not painted over.
+1403	      const bun = this.add.circle(0, -unit * 4.5, unit * 1.55, 0x4a3040);
+1404	      bun.setStrokeStyle(1, 0x2b2118, 0.6);
+1405	      parts.push(bun);
+1406	    }
+1407	    const head = this.add.circle(0, -unit * 2.2, unit * 2.3, 0xf6d5b0);
+1408	    head.setStrokeStyle(1, 0x2b2118, 0.6);
+1409	    parts.push(head);
+1410	    if (role === "chef") {
+1411	      parts.push(this.add.rectangle(0, -unit * 3.9, unit * 4, unit * 1.1, 0xfffdf6).setOrigin(0.5));
+1412	      parts.push(this.add.circle(0, -unit * 5, unit * 2, 0xfffdf6));
+1413	    } else if (role === "host") {
+1414	      parts.push(this.add.rectangle(0, -unit * 3.7, unit * 4.2, unit * 1.2, 0x4a3040).setOrigin(0.5));
+1415	      parts.push(this.add.rectangle(0, unit * 0.4, unit * 1.1, unit * 1.1, 0xf2cc5c).setOrigin(0.5).setAngle(45));
+1416	    } else if (role === "server") {
+1417	      parts.push(this.add.rectangle(0, unit * 0.4, unit * 1.6, unit * 1.1, color).setOrigin(0.5));
+1418	    } else {
+1419	      parts.push(this.add.rectangle(0, -unit * 4, unit * 4.4, unit * 1.3, color).setOrigin(0.5));
+1420	    }
+1421	    parts.push(this.add.rectangle(-unit * 0.8, -unit * 2.2, unit * 0.6, unit * 0.8, 0x2b2118).setOrigin(0.5));
+1422	    parts.push(this.add.rectangle(unit * 0.8, -unit * 2.2, unit * 0.6, unit * 0.8, 0x2b2118).setOrigin(0.5));
+1423	    return parts;
+1424	  }
+1425	
+1426	  private buildRosterAvatar(x: number, y: number, role: Role, compact: boolean): Phaser.GameObjects.Container {
+1427	    const unit = compact ? 1.8 : this.px(2.15);
+1428	    const token = this.add.container(x, y, this.avatarFigure(role, unit));
+1429	    token.setDepth(62);
+1430	    return token;
+1431	  }
+1432	
+1433	  /**
+1434	   * A little pixel-ish cook rather than a coloured dot: the floor has to
+1435	   * read as a room with people in it.
+1436	   */
+1437	  private buildAvatar(
+1438	    x: number,
+1439	    y: number,
+1440	    role: Role,
+1441	    load: number,
+1442	    compact: boolean,
+1443	  ): Phaser.GameObjects.Container {
+1444	    // People grow with the room: a 2.6-unit cook is right for a 520px floor
+1445	    // and a speck on a 1440p one, and you can't drag what you can't see.
+1446	    const unit = compact ? 2 : this.px(2.6);
+1447	    const figureParts = this.avatarFigure(role, unit);
+1448	    const clamped = Math.min(1, Math.max(0, load));
+1449	    if (clamped > 0.5) {
+1450	      const plate = this.add.ellipse(unit * 3.2, unit * 2.4, unit * 2.4, unit * 1.1, 0xfff8e7);
+1451	      plate.setStrokeStyle(1, 0x2b2118, 0.7);
+1452	      plate.setName("carry");
+1453	      figureParts.push(plate);
+1454	    }
+1455	    const figure = this.add.container(0, 0, figureParts);
+1456	    figure.setName("figure");
+1457	    const parts: Phaser.GameObjects.GameObject[] = [figure];
+1458	    const staff = this.staff(role);
+1459	    const nameTag = this.add
+1460	      .text(0, unit * 4.6, staff.name, {
+1461	        color: "#2b2118",
+1462	        backgroundColor: "#fff3d6",
+1463	        fontFamily: MONO,
+1464	        fontSize: compact ? this.fs(5) : this.fs(7),
+1465	        fontStyle: "bold",
+1466	        padding: { x: 2, y: 1 },
+1467	      })
+1468	      .setOrigin(0.5, 0);
+1469	    parts.push(nameTag);
+1470	
+1471	    const barWidth = unit * 6;
+1472	    parts.push(this.add.rectangle(-barWidth / 2, -unit * 6.4, barWidth, 2.5, 0x241b14, 0.9).setOrigin(0, 0.5));
+1473	    const fill = this.add
+1474	      .rectangle(-barWidth / 2, -unit * 6.4, Math.max(1, barWidth * clamped), 2.5, loadColor(clamped))
+1475	      .setOrigin(0, 0.5);
+1476	    parts.push(fill);
+1477	
+1478	    const token = this.add.container(x, y, parts);
+1479	    token.setDepth(20);
+1480	    if (clamped > 0.8) this.tweens.add({ targets: fill, alpha: 0.3, duration: 380, yoyo: true, repeat: -1 });
+1481	    if (this.running) this.startIdleBob(token, y, role);
+1482	    return token;
+1483	  }
+1484	
+1485	  private workerStatus(worker: RestaurantArenaState["workers"][number]): RestaurantArenaWorkerStatus {
+1486	    if (this.state.emergency?.active) return "error";
+1487	    return worker.load > 0.8 ? "acting" : worker.load > 0.5 ? "thinking" : "idle";
+1488	  }
+1489	
+1490	  private drawWorkerBadge(
+1491	    token: Phaser.GameObjects.Container,
+1492	    status: RestaurantArenaWorkerStatus,
+1493	    compact: boolean,
+1494	    holdingDoor = false,
+1495	  ): void {
+1496	    const labels: Record<RestaurantArenaWorkerStatus, string> = {
+1497	      idle: "READY",
+1498	      thinking: "THINKING…",
+1499	      acting: holdingDoor ? "HOLDING" : "ON IT",
+1500	      error: "HELP!",
+1501	    };
+1502	    const colors: Record<RestaurantArenaWorkerStatus, number> = {
+1503	      idle: COLORS.working,
+1504	      thinking: COLORS.pass,
+1505	      acting: holdingDoor ? COLORS.failed : COLORS.door,
+1506	      error: COLORS.alert,
+1507	    };
+1508	    const badgeY = compact ? -17 : -this.px(23);
+1509	    const badge = this.add.text(0, badgeY, labels[status], {
+1510	      color: status === "thinking" ? "#2b2118" : "#ffffff",
+1511	      backgroundColor: `#${colors[status].toString(16).padStart(6, "0")}`,
+1512	      fontFamily: MONO,
+1513	      fontSize: compact ? this.fs(5) : this.fs(6),
+1514	      fontStyle: "bold",
+1515	      padding: { x: 3, y: 2 },
+1516	    }).setOrigin(0.5, 1);
+1517	    token.add(badge);
+1518	    if (status === "thinking" || status === "acting" || status === "error") {
+1519	      this.tweens.add({
+1520	        targets: badge,
+1521	        y: badgeY - 2,
+1522	        alpha: 0.55,
+1523	        duration: status === "error" ? 260 : 500,
+1524	        yoyo: true,
+1525	        repeat: -1,
+1526	      });
+1527	    }
+1528	  }
+1529	
+1530	  setWorkerStatus(role: Role, status: RestaurantArenaWorkerStatus): void {
+1531	    this.workerStatuses.set(role, status);
+1532	    if (this.sys.isActive()) this.requestRepaint();
+1533	  }
+1534	
+1535	  /** Full-width alert while an incident is live. */
+1536	  private drawIncidentBanner(layout: RestaurantArenaLayout): void {
+1537	    if (!this.state.emergency?.active || this.state.decision) return;
+1538	    const compact = layout.compact;
+1539	    const width = layout.dining.x + layout.dining.width - layout.kitchen.x;
+1540	    const height = compact ? 15 : 19;
+1541	    const x = layout.kitchen.x;
+1542	    const y = layout.kitchen.y + layout.kitchen.height * 0.5;
+1543	
+1544	    const banner = this.add.rectangle(x, y, width, height, COLORS.alert).setOrigin(0, 0.5).setDepth(30);
+1545	    banner.setStrokeStyle(1, 0xffffff, 0.8);
+1546	    const label = this.add
+1547	      .text(x + width / 2, y, `${this.state.emergency.kind.replace(/_/g, " ").toUpperCase()} — CLICK THE OVEN`, {
+1548	        color: "#ffffff",
+1549	        fontFamily: MONO,
+1550	        fontSize: compact ? this.fs(7) : this.fs(9),
+1551	        fontStyle: "bold",
+1552	      })
+1553	      .setOrigin(0.5)
+1554	      .setDepth(31);
+1555	    this.tweens.add({ targets: [banner, label], alpha: 0.45, duration: 520, yoyo: true, repeat: -1 });
+1556	  }
+1557	
+1558	  /**
+1559	   * A brief callout for what a decision just changed — dead centre, right
+1560	   * where the decision card itself was, since that's where the player's
+1561	   * eyes already are the instant they click an option. The service log
+1562	   * still gets the flavour line; this is the one-line receipt so the
+1563	   * consequence doesn't require scrolling to find.
+1564	   *
+1565	   * Every `paint()` redraws this from scratch like everything else, so the
+1566	   * fade can't be a single tween that outlives one repaint — instead this
+1567	   * recomputes the correct in-flight alpha from elapsed wall-clock time on
+1568	   * every call (right even if a tick landed mid-fade) and hands off to one
+1569	   * tween per paint for the remaining motion.
+1570	   */
+1571	  private drawOutcomeToast(compact: boolean, width: number, height: number): void {
+1572	    const toast = this.outcomeToast;
+1573	    if (!toast) return;
+1574	    const elapsed = Date.now() - toast.startedAt;
+1575	    if (elapsed >= this.outcomeToastMs) {
+1576	      this.outcomeToast = undefined;
+1577	      return;
+1578	    }
+1579	    const tone = toast.tone === "safe" ? 0x2f5c46 : toast.tone === "risky" ? 0x6b2f2b : 0x40342a;
+1580	
+1581	    const label = this.add.text(0, 0, toast.headline, {
+1582	      color: "#fff3d6",
+1583	      fontFamily: MONO,
+1584	      fontSize: compact ? this.fs(8) : this.fs(10),
+1585	      fontStyle: "bold",
+1586	    });
+1587	    const padX = compact ? 10 : 14;
+1588	    const padY = compact ? 6 : 8;
+1589	    const boxWidth = label.width + padX * 2;
+1590	    const boxHeight = label.height + padY * 2;
+1591	    const x = (width - boxWidth) / 2;
+1592	    const y = height * 0.34 - boxHeight / 2;
+1593	
+1594	    const bg = this.add.rectangle(0, 0, boxWidth, boxHeight, tone).setOrigin(0, 0);
+1595	    bg.setStrokeStyle(2, COLORS.pass, 0.9);
+1596	    label.setPosition(padX, padY);
+1597	    const toastBox = this.add.container(x, y, [bg, label]).setDepth(45);
+1598	
+1599	    const fadeInMs = 180;
+1600	    if (elapsed < fadeInMs) {
+1601	      toastBox.setAlpha(elapsed / fadeInMs);
+1602	      this.tweens.add({ targets: toastBox, alpha: 1, duration: fadeInMs - elapsed });
+1603	    }
+1604	    const remaining = this.outcomeToastMs - elapsed;
+1605	    const fadeOutMs = Math.min(400, remaining);
+1606	    this.tweens.add({ targets: toastBox, alpha: 0, delay: Math.max(0, remaining - fadeOutMs), duration: fadeOutMs });
+1607	  }
+1608	
+1609	  // ── Modal cards ──────────────────────────────────────────────────────
+1610	
+1611	  private scrim(width: number, height: number): void {
+1612	    this.add.rectangle(0, 0, width, height, 0x120d09, 0.82).setOrigin(0, 0).setDepth(60).setInteractive();
+1613	  }
+1614	
+1615	  /**
+1616	   * Pre-shift card: the only screen a first-time player gets before the
+1617	   * clock starts running for real. Sized to its content so the crew rows
+1618	   * stay tight instead of stretching to fill the window.
+1619	   */
+1620	  private drawPreShift(layout: RestaurantArenaLayout, width: number, height: number): void {
+1621	    const compact = layout.compact;
+1622	    this.scrim(width, height);
+1623	
+1624	    const roles: Role[] = ["host", "supply_lead", "chef", "server"];
+1625	    const cardWidth = Math.min(width - 24, 420);
+1626	    const pad = compact ? 14 : 18;
+1627	    const innerWidth = cardWidth - pad * 2;
+1628	    const titleSize = compact ? 18 : 22;
+1629	    const labelSize = compact ? 8 : 10;
+1630	    const bodySize = compact ? 9 : 11;
+1631	    const nameSize = compact ? 10 : 12;
+1632	    const titleH = compact ? 24 : 28;
+1633	    const labelH = compact ? 14 : 16;
+1634	    const goalH = compact ? 26 : 30;
+1635	    const rowH = compact ? 30 : 34;
+1636	    const buttonH = compact ? 30 : 34;
+1637	    const sectionGap = compact ? 10 : 12;
+1638	    const cardHeight =
+1639	      pad +
+1640	      titleH +
+1641	      sectionGap +
+1642	      labelH +
+1643	      goalH +
+1644	      sectionGap +
+1645	      labelH +
+1646	      rowH * roles.length +
+1647	      sectionGap +
+1648	      buttonH +
+1649	      pad;
+1650	    const x = (width - cardWidth) / 2;
+1651	    const y = (height - cardHeight) / 2;
+1652	    const left = x + pad;
+1653	
+1654	    const card = this.add.rectangle(x, y, cardWidth, cardHeight, 0x2f241a).setOrigin(0, 0).setDepth(61);
+1655	    card.setStrokeStyle(2, COLORS.pass, 0.9);
+1656	
+1657	    let cursor = y + pad;
+1658	
+1659	    this.add
+1660	      .text(left, cursor, "THE LITTLE PLATE", {
+1661	        color: "#fff3d6",
+1662	        fontFamily: DISPLAY,
+1663	        fontSize: this.fs(titleSize),
+1664	        fontStyle: "bold",
+1665	      })
+1666	      .setOrigin(0, 0)
+1667	      .setDepth(62);
+1668	    cursor += titleH + sectionGap;
+1669	
+1670	    this.add
+1671	      .text(left, cursor, "OBJECTIVES", {
+1672	        color: "#a99b8a",
+1673	        fontFamily: MONO,
+1674	        fontSize: this.fs(labelSize),
+1675	        fontStyle: "bold",
+1676	      })
+1677	      .setOrigin(0, 0)
+1678	      .setDepth(62);
+1679	    cursor += labelH;
+1680	
+1681	    const goal = this.state.goal;
+1682	    const goalText = goal
+1683	      ? `$${goal.cash}  ·  verify every plate  ·  ${goal.maxWalkouts} walkouts max`
+1684	      : "dinner service  ·  24 min  ·  4 staff";
+1685	    this.add.rectangle(left, cursor, innerWidth, goalH, COLORS.pass).setOrigin(0, 0).setDepth(62);
+1686	    this.add
+1687	      .text(left + 10, cursor + goalH / 2, goalText, {
+1688	        color: "#2b2118",
+1689	        fontFamily: MONO,
+1690	        fontSize: this.fs(bodySize),
+1691	        fontStyle: "bold",
+1692	      })
+1693	      .setOrigin(0, 0.5)
+1694	      .setDepth(63);
+1695	    cursor += goalH + sectionGap;
+1696	
+1697	    this.add
+1698	      .text(left, cursor, "CREW", {
+1699	        color: "#a99b8a",
+1700	        fontFamily: MONO,
+1701	        fontSize: this.fs(labelSize),
+1702	        fontStyle: "bold",
+1703	      })
+1704	      .setOrigin(0, 0)
+1705	      .setDepth(62);
+1706	    cursor += labelH;
+1707	
+1708	    const avatarX = left + (compact ? 10 : 12);
+1709	    const textX = left + (compact ? 24 : 26);
+1710	    roles.forEach((role, index) => {
+1711	      const rowY = cursor + index * rowH;
+1712	      const staff = this.staff(role);
+1713	      this.buildRosterAvatar(avatarX, rowY + rowH / 2, role, compact);
+1714	      this.add
+1715	        .text(textX, rowY + (compact ? 4 : 5), `${staff.name} · ${staff.title}`, {
+1716	          color: "#fff3d6",
+1717	          fontFamily: MONO,
+1718	          fontSize: this.fs(nameSize),
+1719	          fontStyle: "bold",
+1720	        })
+1721	        .setDepth(62);
+1722	      if (staff.trait) {
+1723	        this.add
+1724	          .text(textX, rowY + (compact ? 16 : 18), staff.trait, {
+1725	            color: "#8d8378",
+1726	            fontFamily: MONO,
+1727	            fontSize: this.fs(bodySize),
+1728	          })
+1729	          .setDepth(62);
+1730	      }
+1731	    });
+1732	    cursor += rowH * roles.length + sectionGap;
+1733	
+1734	    this.button(
+1735	      { x: left, y: cursor, width: innerWidth, height: buttonH },
+1736	      "OPEN THE DOORS",
+1737	      "sim_start",
+1738	      { fill: 0x3d9b6d, size: compact ? 10 : 12, depth: 62 },
+1739	    );
+1740	  }
+1741	
+1742	  /**
+1743	   * The decision card. This is the game: the clock is stopped, someone is
+1744	   * asking, and every option states its price.
+1745	   */
+1746	  private drawDecision(layout: RestaurantArenaLayout, width: number, height: number): void {
+1747	    const decision = this.state.decision;
+1748	    if (!decision) return;
+1749	    const compact = layout.compact;
+1750	    this.scrim(width, height);
+1751	
+1752	    const cardWidth = Math.min(width - 24, 400);
+1753	    const optionHeight = compact ? 48 : 56;
+1754	    const headerHeight = compact ? 92 : 108;
+1755	    const cardHeight = Math.min(height - 24, headerHeight + decision.options.length * (optionHeight + 6) + 12);
+1756	    const x = (width - cardWidth) / 2;
+1757	    const y = (height - cardHeight) / 2;
+1758	
+1759	    const card = this.add.rectangle(x, y, cardWidth, cardHeight, 0x2f241a).setOrigin(0, 0).setDepth(61);
+1760	    card.setStrokeStyle(2, COLORS.pass, 0.95);
+1761	
+1762	    const dot = this.add.circle(x + 18, y + 20, compact ? 8 : 10, ROLE_COLORS[decision.speakerRole]).setDepth(62);
+1763	    dot.setStrokeStyle(2, 0xffffff, 0.9);
+1764	    this.add
+1765	      .text(x + 34, y + 10, decision.title, {
+1766	        color: "#f2cc5c",
+1767	        fontFamily: SANS,
+1768	        fontSize: compact ? this.fs(12) : this.fs(15),
+1769	        fontStyle: "bold",
+1770	        wordWrap: { width: cardWidth - 52 },
+1771	        maxLines: 2,
+1772	      })
+1773	      .setDepth(62);
+1774	    this.add
+1775	      .text(x + 34, y + (compact ? 28 : 32), `${decision.speaker} needs a call`, {
+1776	        color: "#cbbca9",
+1777	        fontFamily: SANS,
+1778	        fontSize: compact ? this.fs(9) : this.fs(11),
+1779	      })
+1780	      .setDepth(62);
+1781	    this.add
+1782	      .text(x + 14, y + (compact ? 46 : 52), `“${decision.prompt}”`, {
+1783	        color: "#fff8e7",
+1784	        fontFamily: DISPLAY,
+1785	        fontSize: compact ? this.fs(11) : this.fs(13),
+1786	        fontStyle: "italic",
+1787	        wordWrap: { width: cardWidth - 28 },
+1788	        lineSpacing: 4,
+1789	        maxLines: 3,
+1790	      })
+1791	      .setDepth(62);
+1792	
+1793	    decision.options.forEach((option, index) => {
+1794	      const oy = y + headerHeight + index * (optionHeight + 6);
+1795	      const rect = { x: x + 10, y: oy, width: cardWidth - 20, height: optionHeight };
+1796	      const tone =
+1797	        option.tone === "safe" ? 0x2f5c46 : option.tone === "risky" ? 0x6b2f2b : 0x40342a;
+1798	      const bg = this.add.rectangle(rect.x, rect.y, rect.width, rect.height, tone).setOrigin(0, 0).setDepth(62);
+1799	      bg.setStrokeStyle(1, COLORS.cream, 0.35);
+1800	      this.add
+1801	        .text(rect.x + 10, rect.y + 7, option.label, {
+1802	          color: "#fff8e7",
+1803	          fontFamily: SANS,
+1804	          fontSize: compact ? this.fs(11) : this.fs(13),
+1805	          fontStyle: "bold",
+1806	        })
+1807	        .setDepth(63);
+1808	      this.add
+1809	        .text(rect.x + 10, rect.y + (compact ? 24 : 28), option.detail, {
+1810	          color: "#e2d4c0",
+1811	          fontFamily: SANS,
+1812	          fontSize: compact ? this.fs(9) : this.fs(10),
+1813	          wordWrap: { width: rect.width - 20 },
+1814	          lineSpacing: 2,
+1815	          maxLines: 2,
+1816	        })
+1817	        .setDepth(63);
+1818	
+1819	      const zone = this.hotspot(rect, `decide_${decision.id}_${option.id}`, undefined, 64);
+1820	      zone.on("pointerover", () => bg.setFillStyle(Phaser.Display.Color.ValueToColor(tone).lighten(22).color));
+1821	      zone.on("pointerout", () => bg.setFillStyle(tone));
+1822	    });
+1823	  }
+1824	
+1825	  /**
+1826	   * The manager brief. Everything above the floor used to be transport
+1827	   * controls and a money figure; a first-time player had to infer tonight's
+1828	   * target from a "/190" suffix and infer the next move from nothing at all.
+1829	   * This band tracks the three conditions that can lose the night, names the
+1830	   * one thing to do now, and keeps the last decision's receipt on screen
+1831	   * after its toast has faded (#304).
+1832	   *
+1833	   * Kept quiet on purpose. Only a condition in trouble gets colour — a band
+1834	   * of green chips reads as urgent when nothing is wrong, and then has no
+1835	   * louder register left for when something is. Same reason the tag does not
+1836	   * pulse for an open decision: the card is already modal and the top bar
+1837	   * already flashes NEEDS A CALL, so a third alarm only adds noise.
+1838	   *
+1839	   * The content is computed by `arenaBrief`, which is pure and tested; this
+1840	   * only lays it out. The training coach feeds the same "now" line rather
+1841	   * than getting a banner of its own, so there is exactly one place on
+1842	   * screen that answers "what do I do".
+1843	   */

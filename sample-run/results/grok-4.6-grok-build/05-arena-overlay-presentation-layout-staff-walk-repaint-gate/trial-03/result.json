@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-03",
+  "task": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate",
+  "trial_number": 3,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-9ce2b11b00f3",
+  "configuration": "grok-4.6-grok-build",
+  "model": "openrouter/x-ai/grok-4.6",
+  "model_label": "Grok 4.6",
+  "route": "x-ai/grok-4.6",
+  "provider": "OpenRouter",
+  "harness": "Grok Build",
+  "agent_version": "1.0.25",
+  "reasoning_effort": "high",
+  "max_output_tokens": 500000,
+  "status": "complete",
+  "reward": 0,
+  "solved": false,
+  "source_trial": "forge-tui-gamepigeon-arena-overl__MuHVqJH",
+  "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__MuHVqJH",
+  "metrics": {
+    "wall_clock_seconds": 1082,
+    "output_tokens": 61370,
+    "step_count": 35
+  },
+  "trajectory": {
+    "path": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-03.json",
+    "sha256": "93d16364cb9cee48f2534c1b4bf839f85d0f00f9a2167ec253c59d096da92a0a",
+    "redacted": true
+  }
+}

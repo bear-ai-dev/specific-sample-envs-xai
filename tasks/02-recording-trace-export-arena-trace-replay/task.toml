@@ -1,0 +1,21 @@
+schema_version = "1.0"
+
+[task]
+name = "forge/tui-gamepigeon-recording-trace-export-arena-trace-replay"
+description = "Restore the restaurant-arena benchmark trace pipeline: capturing a schema-valid restaurant-arena-trace-v3 record from a live RestaurantGame, validating it, exporting it as JSON/JSONL, and natively replaying/verifying an exported trace, including the two CLI scripts that drive export and replay."
+
+[agent]
+user = "agent"
+timeout_sec = 1800
+
+[environment]
+dockerfile = "environment/Dockerfile"
+workdir = "/app"
+
+[verifier]
+user = "root"
+timeout_sec = 600
+
+[tests]
+script = "tests/test.sh"
+

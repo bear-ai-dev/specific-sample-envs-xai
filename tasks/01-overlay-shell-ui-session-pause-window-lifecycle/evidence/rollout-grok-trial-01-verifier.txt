@@ -1,0 +1,12 @@
+Configuration: Grok 4.6 with Grok Build
+Trial: 01
+Source trial: forge-tui-gamepigeon-overlay-she__JowMBPz
+Source run: run-5e3f4536403c
+Reward: 0
+Verifier: 14 passed, 2 failed
+
+Failed checks:
+- opening How to Play from an agent pause returns to the pause prompt, not the live board
+- pressing Escape while playing minimizes the window, same as the hide button
+
+Why it failed: The session works, but pause-to-help restoration and the Escape minimize path are still broken.

@@ -1,0 +1,12 @@
+Configuration: Opus 5 with Claude Code
+Trial: 06
+Source trial: forge-tui-gamepigeon-auth-handof__hTQBXpM
+Source run: run-3780b16b1b5a
+Reward: 0
+Verifier: 16 passed, 1 failed
+Post-QA verdict: FAIR
+
+Failed check:
+- cannot be used to break out of its own redirect script
+
+Why it failed: The redirect page left a script-tag breakout in its embedded callback URL.

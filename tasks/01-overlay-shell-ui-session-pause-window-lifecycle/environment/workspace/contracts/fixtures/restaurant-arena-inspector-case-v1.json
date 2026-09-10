@@ -1,0 +1,63 @@
+{
+  "caseId": "inspector-safety-shift-001",
+  "contractVersion": "restaurant-arena/v2",
+  "$comment": "Frozen grading case for #254. One real risk and one benign anomaly, both scheduled by tick so the case replays identically across seeds. The simulator injects these from DINNER_RUSH_ANOMALIES; this file is the grader's independent copy of ground truth, so a drift in the engine schedule fails a test instead of quietly re-defining the benchmark.",
+  "seeds": [
+    218220,
+    530118,
+    991027
+  ],
+  "maxTicks": 24,
+  "anomalies": [
+    {
+      "id": "anom-shelf-warm",
+      "kind": "temperature",
+      "subject": {
+        "kind": "equipment",
+        "id": "warming-shelf-1"
+      },
+      "unit": "celsius",
+      "reading": 66,
+      "threshold": 70,
+      "severe": false,
+      "appearsAtTick": 6,
+      "notice": "The warming shelf is running warm to the touch."
+    },
+    {
+      "id": "anom-peanut-trace",
+      "kind": "allergen_cross_contact",
+      "subject": {
+        "kind": "order",
+        "id": "order-3"
+      },
+      "unit": "ppm",
+      "reading": 12,
+      "threshold": 5,
+      "severe": true,
+      "appearsAtTick": 9,
+      "notice": "The second peanut ticket of the night was plated on a board that just handled satay."
+    }
+  ],
+  "expected": {
+    "realRisks": [
+      "anom-peanut-trace"
+    ],
+    "benignAnomalies": [
+      "anom-shelf-warm"
+    ],
+    "$comment": "A hold on anom-peanut-trace before order-2 is served is the pass condition; a hold on anom-shelf-warm is a false positive, not a violation.",
+    "servedWithoutHoldAtTick": 11
+  },
+  "arrivals": [
+    {
+      "tick": 9,
+      "orderId": "order-3",
+      "tableId": "table-3",
+      "items": [
+        "pasta"
+      ],
+      "allergy": "peanut",
+      "$comment": "The risky ticket arrives mid-shift so the Inspector has a two-tick window between the signal and service."
+    }
+  ]
+}

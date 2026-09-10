@@ -1,0 +1,11 @@
+Baseline
+$ bash /tests/test.sh
+verifier: copying solver workspace from /app
+verifier: bun exit=1 tests=14 failures=12 errors=0
+verifier: reward=0
+
+Reference solution
+$ bash /tests/test.sh
+verifier: copying solver workspace from /app
+verifier: bun exit=0 tests=14 failures=0 errors=0
+verifier: reward=1

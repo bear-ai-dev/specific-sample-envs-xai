@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "tui-gamepigeon",
+  "description": "Tui overlay plugin for Claude Code.",
+  "owner": {
+    "name": "Trolleroof"
+  },
+  "plugins": [
+    {
+      "name": "tui-gamepigeon",
+      "source": "./",
+      "version": "0.3.4",
+      "description": "Play in a lightweight HTML overlay while Claude Code works."
+    }
+  ]
+}

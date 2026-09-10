@@ -1,0 +1,12 @@
+Configuration: Grok 4.6 with Grok Build
+Trial: 02
+Source trial: forge-tui-gamepigeon-auth-handof__PVLC9DD
+Source run: run-391e173af3dc
+Reward: 0
+Verifier: 15 passed, 2 failed
+
+Failed checks:
+- preserves the overlay's state nonce when appending the token
+- cannot be used to break out of its own redirect script
+
+Why it failed: The token-bearing response omits its no-referrer policy and leaves the callback URL able to break out of the redirect script.

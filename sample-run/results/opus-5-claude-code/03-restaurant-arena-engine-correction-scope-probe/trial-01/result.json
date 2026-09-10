@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-01",
+  "task": "03-restaurant-arena-engine-correction-scope-probe",
+  "trial_number": 1,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-47110852f037",
+  "configuration": "opus-5-claude-code",
+  "model": "bedrock/us.anthropic.claude-opus-5",
+  "model_label": "Opus 5",
+  "route": "us.anthropic.claude-opus-5",
+  "provider": "Amazon Bedrock",
+  "harness": "Claude Code",
+  "agent_version": "2.1.258",
+  "reasoning_effort": "high",
+  "max_output_tokens": 128000,
+  "status": "complete",
+  "reward": 1,
+  "solved": true,
+  "source_trial": "forge-tui-gamepigeon-restaurant__AQShjkr",
+  "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__AQShjkr",
+  "metrics": {
+    "wall_clock_seconds": 1646,
+    "output_tokens": 90954,
+    "step_count": 131
+  },
+  "trajectory": {
+    "path": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-01.json",
+    "sha256": "f95fd8186e059ec45d402f1c3c56762ea61ca8a82fba0fb37b0ef76ff3d5e04c",
+    "redacted": true
+  }
+}

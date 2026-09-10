@@ -1,0 +1,821 @@
+{
+  "schema_version": "1.0",
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "created_at": "2026-09-10",
+  "attempts_per_task": 8,
+  "task_hashes": {
+    "01-overlay-shell-ui-session-pause-window-lifecycle": "11b5ce33ea3970305188fa6782fb4dd38af98c922629f283be1a932e0664cf4c",
+    "02-recording-trace-export-arena-trace-replay": "258945988547025c044666e06ed41542628a9761e868b505bc470cd66ed1555c",
+    "03-restaurant-arena-engine-correction-scope-probe": "4a3e7c7fa1f4ca9dcf37920b57e8964688e16eec3676b7e28d8d374c96774015",
+    "04-auth-handoff-cli-browser-oauth": "d38bd29e9708f782aa711c4b2a544ac9fc4513faefb9057daadf7d8fa875587e",
+    "05-arena-overlay-presentation-layout-staff-walk-repaint-gate": "be40549449f2d18ad2b472be0984f31d3dcd69b17389242964f976c604451fd5"
+  },
+  "configurations": [
+    "opus-5-claude-code",
+    "grok-4.6-grok-build"
+  ],
+  "strict_valid": 80,
+  "passes": 46,
+  "trials": [
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-01",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-01.json",
+      "trajectory_sha256": "1c280a46910bb7b7dffb883473a405c5ce745254904bf08a7179a43952f5c351",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-01/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__JowMBPz"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-02",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-02.json",
+      "trajectory_sha256": "26b94d0f1e35c060599b005c5c9148b930e7bf21c0096ae1e488a8a5ce6b2f47",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-02/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__KSTWFCY"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-03",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-03.json",
+      "trajectory_sha256": "4211132097d89b572e3bf032a1e3181026a8aae71eac26fc3a0f40796a10b8ca",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-03/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__LV7PfQL"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-04",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-04.json",
+      "trajectory_sha256": "d1dce80b9108d3954f60908e1cddd3b7133b50e8bed26781cf5764b79e130e25",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-04/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__TBqj46x"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-05",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 1,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-05.json",
+      "trajectory_sha256": "19c1f7ca384dcbd0392db09f9ae6162bb1e70b9cbee320a3f6769670baada5d4",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-05/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__ZYa4VTF"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-06",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-06.json",
+      "trajectory_sha256": "3f9762f99578486ab0f07d267e88d674762d880534e7ffb37a2dc70e6d871a0b",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-06/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__bsoGXhi"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-07",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-07.json",
+      "trajectory_sha256": "fddc71a5b61eb865e255ab5db24cfea35809967487d30e81f5a7ee4e62dbed2a",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-07/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__hij6Eav"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-08",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-5e3f4536403c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-08.json",
+      "trajectory_sha256": "7e251057115db01cfef1ef1d43804567bec3e59fdf2509ac617afa02b89431ad",
+      "result": "sample-run/results/grok-4.6-grok-build/01-overlay-shell-ui-session-pause-window-lifecycle/trial-08/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__zYJBALV"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-01",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-bca820f7288c",
+      "reward": 1,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-01.json",
+      "trajectory_sha256": "3fbb7918349442a21b48e5b2d62570c887f79925aced1528b8d067abe072abef",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-01/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__APvVeYy"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-02",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-bca820f7288c",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-02.json",
+      "trajectory_sha256": "6efa47cb6b48fdc6e349b041b13c2c80e310208ebcc541b648711ac740364331",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-02/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__gxY3JhK"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-03",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-cf47cf234995",
+      "reward": 1,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-03.json",
+      "trajectory_sha256": "57e62b1941ce6e8f7f1f39926023fc3c89eda038dd300ddadd0f613e2eab3f36",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-03/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__3rY9R52"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-04",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-cf47cf234995",
+      "reward": 1,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-04.json",
+      "trajectory_sha256": "76a5b366c7663d294b886e3a5f146dceb21867de1c4ddde1511a00198d5d7004",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-04/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__CEmBk5J"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-05",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-cf47cf234995",
+      "reward": 1,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-05.json",
+      "trajectory_sha256": "02032b439b81928554ab4283830e39007209ce822daf35c43d1c75ea1c988f48",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-05/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__acw8sSC"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-06",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-cf47cf234995",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-06.json",
+      "trajectory_sha256": "e166cd83af560661bc3c368d6323122c5681424dfe69aeed26897a9c112b2107",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-06/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__ddrq54m"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-07",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-cf47cf234995",
+      "reward": 0,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-07.json",
+      "trajectory_sha256": "4ec934756d0e21010200774d166aba836d8d00665aa77ce2980be2d9600ef679",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-07/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__seBybmD"
+    },
+    {
+      "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-08",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-cf47cf234995",
+      "reward": 1,
+      "trajectory": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/opus-5-claude-code/trajectory-trial-08.json",
+      "trajectory_sha256": "b1a834529e9c528fb542d9b5d6490b220a5212b2fa891b6b2c2e15e27e568bb6",
+      "result": "sample-run/results/opus-5-claude-code/01-overlay-shell-ui-session-pause-window-lifecycle/trial-08/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-overlay-she__thhzC3M"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-01",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-01.json",
+      "trajectory_sha256": "8224babb2307fd4441fd379cde1298bc05aeebbe20d945d7e97465d342188ebd",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-01/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__4TpMJFw"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-02",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-02.json",
+      "trajectory_sha256": "c788e5ec6e84452930b79fbca396205ba026d67a7e893f3a584c0fac4f7a9136",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-02/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__DRjbnmr"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-03",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-03.json",
+      "trajectory_sha256": "52eb9e18f0d8ec0d16ef917015c6873bfe9748475589ef5fbea0745a2c1c31e9",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-03/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__UwdTi4Z"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-04",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 0,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-04.json",
+      "trajectory_sha256": "241562e5b616ec06a10177953f92ebfd05da655eb84002504009f9aaed9397c6",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-04/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__VqWTUWF"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-05",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 0,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-05.json",
+      "trajectory_sha256": "1ada9b00fe87a436675ec375b538c5e46ec7ee171111ec264b91233a51b9f65b",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-05/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__WisCMeC"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-06",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-06.json",
+      "trajectory_sha256": "c1086d78802732926702396e045ba6298d4f71a2b2190d20a8705bfc7ecc4789",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-06/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__g9m3boM"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-07",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-07.json",
+      "trajectory_sha256": "98487a61ba2815e84b7c6b9016d5a94c100728e28572984ecf9fd4c44b7f85a2",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-07/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__gehKhVH"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-08",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-2e4ba03c28b4",
+      "reward": 0,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-08.json",
+      "trajectory_sha256": "34f3c38465e4ecbc8ce188937943ad80a582bdb087d64c06e3fa135cce399143",
+      "result": "sample-run/results/grok-4.6-grok-build/02-recording-trace-export-arena-trace-replay/trial-08/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__xwWyuWC"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-01",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-e5a09bcc1c79",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-01.json",
+      "trajectory_sha256": "0d8a814dc8734136ed0bd7f143f031c247671c7bde7c02e78e3b560822dd84d6",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-01/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__MAKucxs"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-02",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-e5a09bcc1c79",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-02.json",
+      "trajectory_sha256": "672f94b582b0b48fdb707bd56222f567b00cbfe8ff06a741e79865e096416e44",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-02/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__PgW7fCu"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-03",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-614ebf4a263e",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-03.json",
+      "trajectory_sha256": "98294ade836bb50365d4a0ac5b3a12c114e6f48f3f5e618103c91ece876aad36",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-03/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__FFKLy29"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-04",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-614ebf4a263e",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-04.json",
+      "trajectory_sha256": "956dfc95c39ce6f7ec880e2cd8dba9b66cc1064d68cebb57c5c227617c4840a7",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-04/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__HQsoGjv"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-05",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-614ebf4a263e",
+      "reward": 0,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-05.json",
+      "trajectory_sha256": "1f4517edf23d882b320a66d8c3e39ef34266e317d7d496f06c9a9428f6d68e00",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-05/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__TMadjGG"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-06",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-614ebf4a263e",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-06.json",
+      "trajectory_sha256": "f00cb7220ee7c724184ded586701c882ed51039a22bddfa67cce63ab8d5be053",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-06/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__e38uD4q"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-07",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-614ebf4a263e",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-07.json",
+      "trajectory_sha256": "49f3c3cc485fa7bc9415e179c3f3f9ae13855c7db7e78a9b63381d927e626a1e",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-07/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__h4vM7mY"
+    },
+    {
+      "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-08",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-614ebf4a263e",
+      "reward": 1,
+      "trajectory": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-08.json",
+      "trajectory_sha256": "7abaf3718213a741ed8d4bd8439a092d79595f30f7c950d7ea4de6460149e38c",
+      "result": "sample-run/results/opus-5-claude-code/02-recording-trace-export-arena-trace-replay/trial-08/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__zmv3Aft"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-01",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-01.json",
+      "trajectory_sha256": "4dfacef505e6dacf108ce03d4c82febeab5df184f13e212532de003c503951e6",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-01/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__8NK8kvS"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-02",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 0,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-02.json",
+      "trajectory_sha256": "b7d3e7ab805ff7a883d611e03475d84195d406bf0486bd07349d3ad119a20cb6",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-02/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__UYtDcAS"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-03",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 0,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-03.json",
+      "trajectory_sha256": "9407ec99ac1899daff4f8b78a597c7d2620c996ecb8dfa726ff23d2c83a34246",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-03/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__fsg6ryz"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-04",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-04.json",
+      "trajectory_sha256": "f066abe7ca229a127534ffd155bf3553b56abf3992d465d8eeef6417e5102ca5",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-04/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__hJxN4jn"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-05",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-05.json",
+      "trajectory_sha256": "0d709faabfad2513cdf9325ec93b0e92b02beae5aa645d6e41aa9d492a5e1101",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-05/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__hdaJQBt"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-06",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 0,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-06.json",
+      "trajectory_sha256": "40c5a3bd1d1f9c0117f51d7f896a74b85d762cabc018cff84f22bc5f4f7c7cff",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-06/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__juUXcz9"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-07",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 0,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-07.json",
+      "trajectory_sha256": "1474104a1ccc1feebb71a593d286ec0c5841a58a26cc7a06969aa788a1bf912a",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-07/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__sEyLhXW"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-08",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-0b5c41265bd5",
+      "reward": 0,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-08.json",
+      "trajectory_sha256": "474c6054a71c3f613a335a475d82c4a3d361847af0c66561be1f49dd79f592e3",
+      "result": "sample-run/results/grok-4.6-grok-build/03-restaurant-arena-engine-correction-scope-probe/trial-08/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__txNny8Z"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-01",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-47110852f037",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-01.json",
+      "trajectory_sha256": "f95fd8186e059ec45d402f1c3c56762ea61ca8a82fba0fb37b0ef76ff3d5e04c",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-01/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__AQShjkr"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-02",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-47110852f037",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-02.json",
+      "trajectory_sha256": "1eb2b086bef89ed1006a82e890cf91d02e4cbefc94a402d5835d7eb008e12638",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-02/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__mNREeyc"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-03",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-0185146068d6",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-03.json",
+      "trajectory_sha256": "c697235de63857bb16dc3ca548c4bf57e827e8b85da135ab77e59a7ccb8c5aa5",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-03/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__3Gokpv9"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-04",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-0185146068d6",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-04.json",
+      "trajectory_sha256": "a461323f80919be0cf1b3f28a28c72ebc31f40a081a4e1d2640d819c6a5d2008",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-04/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__8naZXku"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-05",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-0185146068d6",
+      "reward": 0,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-05.json",
+      "trajectory_sha256": "81b0b15915526d1dd92d24fef3782c5e41b11c4ae24bf415130824c0ee3a215c",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-05/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__FSuiJLu"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-06",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-0185146068d6",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-06.json",
+      "trajectory_sha256": "7534e909b3c6620eed20905f79bc3b921aca8f0c6c2b3ec0c4a0658e7c9d2ef7",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-06/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__VQnq5sV"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-07",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-0185146068d6",
+      "reward": 1,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-07.json",
+      "trajectory_sha256": "5d6abde448ff698dbb1211a940f5dbe3e48ed86033f5de959a301fd99295fd2d",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-07/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__ny57XT7"
+    },
+    {
+      "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-08",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-0185146068d6",
+      "reward": 0,
+      "trajectory": "trajectories/03-restaurant-arena-engine-correction-scope-probe/opus-5-claude-code/trajectory-trial-08.json",
+      "trajectory_sha256": "419cc51ff0c02d7a5c93307660dd640c4bfc20f42606a4608f404b42734244ec",
+      "result": "sample-run/results/opus-5-claude-code/03-restaurant-arena-engine-correction-scope-probe/trial-08/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-restaurant__z97bLRG"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-01",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-01.json",
+      "trajectory_sha256": "b152884f97a9d0831ec203175690d1076514d1b0a8186c91dc090789e90f3e7b",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-01/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__ETMy8sV"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-02",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 0,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-02.json",
+      "trajectory_sha256": "a5d62d0f25972ba0f2d963da90dc2b339ee3538e46ee8c1249696ce294cf7d2c",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-02/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__PVLC9DD"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-03",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 0,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-03.json",
+      "trajectory_sha256": "598df5748c6dea2a682b0afaf93f837a3683e7a4bbfa3632a9abdbcf1cdc08b7",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-03/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__S36BmWY"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-04",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-04.json",
+      "trajectory_sha256": "ba7cd57ad583df5315ab47888e599785c547d6cb90becb49c0969c31c1bee7fa",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-04/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__U4gTJFK"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-05",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 0,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-05.json",
+      "trajectory_sha256": "ce4fd851dc3d905e82248d4fd5c9ac05527f525161a63f0e56dd22fdafb23006",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-05/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__YGFXzm3"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-06",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-06.json",
+      "trajectory_sha256": "86bdc5462f75b599c04ddb9836e969fc678fa7b26baf04e39981c2e6aca5a7df",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-06/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__bEV55fN"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-07",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 0,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-07.json",
+      "trajectory_sha256": "1364a86680cae5c41f61aca3c03e970dc5801ea1ccd579af4778a2333fcc4216",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-07/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__nobdLWm"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-08",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-391e173af3dc",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/grok-4.6-grok-build/trajectory-trial-08.json",
+      "trajectory_sha256": "83effd27749d5bee82d3f49b080c9b634159e8ea27ea66fdddc943b07e09ed9e",
+      "result": "sample-run/results/grok-4.6-grok-build/04-auth-handoff-cli-browser-oauth/trial-08/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-auth-handof__oaVKGyq"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-01",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-561288a03626",
+      "reward": 0,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-01.json",
+      "trajectory_sha256": "8e1ead988777b495b98b788e27207c8fe8cadcb0993c5b65f8dc364acac27cfb",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-01/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__E744z9D"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-02",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-561288a03626",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-02.json",
+      "trajectory_sha256": "12eb8976cd13ae920621d9a1db154a6d626e03a998d91c1d68eb59429ec2ca4e",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-02/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__pDTZ3BE"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-03",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-3780b16b1b5a",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-03.json",
+      "trajectory_sha256": "41164fccefd391e1795256d78fc7dc2b62f6a3101ad2e418e4fa9580c0954847",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-03/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__7E9ydt6"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-04",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-3780b16b1b5a",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-04.json",
+      "trajectory_sha256": "28b9797b16302bc924523666997b070e5b35b58547d7fa14e70ba56be32d4955",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-04/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__Wmb4EhY"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-05",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-3780b16b1b5a",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-05.json",
+      "trajectory_sha256": "94f8ba4b9a4103957869101cb0417230bc41819c9d4650944407e7e3354f74ae",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-05/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__XuhSeRp"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-06",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-3780b16b1b5a",
+      "reward": 0,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-06.json",
+      "trajectory_sha256": "89a26fb1c212b98e9bfb4ad5a7875720a6d9b4f688fa25270bf9b8bef56c0ab3",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-06/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__hTQBXpM"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-07",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-3780b16b1b5a",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-07.json",
+      "trajectory_sha256": "88d52b0039f2b6bb3d283e8c14da40af9656d71097a13bef0e9d98ca74a02b55",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-07/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__mfmk5Hv"
+    },
+    {
+      "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-08",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-3780b16b1b5a",
+      "reward": 1,
+      "trajectory": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-08.json",
+      "trajectory_sha256": "58d3f5f710288c28f5f96aaf5517e679e935d81a7361a30e34097d6cc8e5c373",
+      "result": "sample-run/results/opus-5-claude-code/04-auth-handoff-cli-browser-oauth/trial-08/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__zoBNx5Q"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-01",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 0,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-01.json",
+      "trajectory_sha256": "8991ae612b49b77d99dd9d3b9016a473da2d596f2f16c0aafae70ca17b1de792",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-01/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__2nbjiPP"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-02",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-02.json",
+      "trajectory_sha256": "0cd28ac965c7e51668227bfb88a09b5368760976ef91d100ba16a3ae0679b81f",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-02/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__2uo54Sf"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-03",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 0,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-03.json",
+      "trajectory_sha256": "93d16364cb9cee48f2534c1b4bf839f85d0f00f9a2167ec253c59d096da92a0a",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-03/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__MuHVqJH"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-04",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 0,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-04.json",
+      "trajectory_sha256": "44be96e784d3fc3001ec15e9103cd58ab551993305ce00c7783916d47bed6aa6",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-04/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__UUWgMRJ"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-05",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 0,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-05.json",
+      "trajectory_sha256": "5d62ced89d5608a54c7a16183b2811ae3b9a3c5861d3d7ef7aaf0ef846146a5b",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-05/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__ZqzLa8K"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-06",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 0,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-06.json",
+      "trajectory_sha256": "e46d02e01f56f3124e298192f75837f58a3c7a4fd19650cf16b361caafe8b8ad",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-06/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__ddpcg8s"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-07",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 0,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-07.json",
+      "trajectory_sha256": "bb70ffbb8e5101bfabe85f5c1a012b868cca9c14a61c4b7ab04e9a4510921751",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-07/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__ies4XRj"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-08",
+      "configuration": "grok-4.6-grok-build",
+      "run_id": "run-9ce2b11b00f3",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/grok-4.6-grok-build/trajectory-trial-08.json",
+      "trajectory_sha256": "d6a6dbdaad5e9b25ee151df3cfd5908a6c80781265fe63d8e8b0a5c986c1889f",
+      "result": "sample-run/results/grok-4.6-grok-build/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-08/result.json",
+      "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-arena-overl__o5gPdkC"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-01",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-6adac35dab6d",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-01.json",
+      "trajectory_sha256": "a841dbe4a6705b3ff522867a51ad68f27da661d28ef41cf21cba9e217c97e419",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-01/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__2vCoWDF"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-02",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-6adac35dab6d",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-02.json",
+      "trajectory_sha256": "b1791511131bd87e24034b133783094c40411b19c1f84c4f609ce1c70a4b5195",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-02/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__C25YvUN"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-03",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-c9bb94efbe6e",
+      "reward": 0,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-03.json",
+      "trajectory_sha256": "a5799959b4d4ff1eb82cf3845148d0dc08079bcd224f9528808955333e80892a",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-03/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__Do8rhNR"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-04",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-c9bb94efbe6e",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-04.json",
+      "trajectory_sha256": "56844caa685482651d8528c10f55c870ab493afc61f6d085981a42b35126a122",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-04/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__WVYyVty"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-05",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-c9bb94efbe6e",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-05.json",
+      "trajectory_sha256": "e672316719dffede67475fc9ca66cbe53f530b31e6d9e0b652a95727bc8cf6cd",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-05/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__djjJCBB"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-06",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-c9bb94efbe6e",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-06.json",
+      "trajectory_sha256": "52773c7d741dcb984b2b63b6c126206074da749a0d2b0dd51c43cbc8b1006364",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-06/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__eRYg2Qh"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-07",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-c9bb94efbe6e",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-07.json",
+      "trajectory_sha256": "15c634f0ec77ba5343b05930a8848461cc658bb761bc65d00104aab8fd9f7332",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-07/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__qeSjBC7"
+    },
+    {
+      "canonical_id": "05-arena-overlay-presentation-layout-staff-walk-repaint-gate__trial-08",
+      "configuration": "opus-5-claude-code",
+      "run_id": "run-c9bb94efbe6e",
+      "reward": 1,
+      "trajectory": "trajectories/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/opus-5-claude-code/trajectory-trial-08.json",
+      "trajectory_sha256": "42139aad2ef0dd23ba67b72bc39eb578046779f5719ff501f163dba782eb1fea",
+      "result": "sample-run/results/opus-5-claude-code/05-arena-overlay-presentation-layout-staff-walk-repaint-gate/trial-08/result.json",
+      "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-arena-overl__qmzdUKf"
+    }
+  ]
+}

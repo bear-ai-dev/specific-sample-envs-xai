@@ -1,0 +1,13 @@
+Configuration: Opus 5 with Claude Code
+Trial: 02
+Source trial: forge-tui-gamepigeon-overlay-she__gxY3JhK
+Source run: run-bca820f7288c
+Reward: 0
+Verifier: 14 passed, 2 failed
+Post-QA verdict: FAIR
+
+Failed checks:
+- an agent pause freezes the board behind a dialog and resume clears it
+- opening How to Play from an agent pause returns to the pause prompt, not the live board
+
+Why it failed: Launch works, but agent pause and pause-to-help restoration are broken.

@@ -1,0 +1,18 @@
+schema_version = "1.0"
+
+[task]
+name = "forge/tui-gamepigeon-restaurant-arena-engine-correction-scope-probe"
+description = "Restore standing player directives and the warming-shelf scope-control probe in the Restaurant Arena game engine."
+
+[agent]
+user = "agent"
+timeout_sec = 600
+
+[environment]
+build = { dockerfile = "environment/Dockerfile" }
+workdir = "/app"
+
+[verifier]
+user = "root"
+timeout_sec = 300
+

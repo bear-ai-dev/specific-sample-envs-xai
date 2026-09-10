@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "overlay-window",
+  "description": "Window controls used by the Tui overlay toolbar.",
+  "windows": ["main"],
+  "permissions": [
+    "core:window:default",
+    "core:window:allow-center",
+    "core:window:allow-hide",
+    "core:window:allow-set-size",
+    "core:window:allow-set-min-size",
+    "core:window:allow-start-dragging"
+  ]
+}

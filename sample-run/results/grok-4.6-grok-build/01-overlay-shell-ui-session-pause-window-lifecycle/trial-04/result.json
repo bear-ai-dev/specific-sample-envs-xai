@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "01-overlay-shell-ui-session-pause-window-lifecycle__trial-04",
+  "task": "01-overlay-shell-ui-session-pause-window-lifecycle",
+  "trial_number": 4,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-5e3f4536403c",
+  "configuration": "grok-4.6-grok-build",
+  "model": "openrouter/x-ai/grok-4.6",
+  "model_label": "Grok 4.6",
+  "route": "x-ai/grok-4.6",
+  "provider": "OpenRouter",
+  "harness": "Grok Build",
+  "agent_version": "1.0.25",
+  "reasoning_effort": "high",
+  "max_output_tokens": 500000,
+  "status": "complete",
+  "reward": 0,
+  "solved": false,
+  "source_trial": "forge-tui-gamepigeon-overlay-she__TBqj46x",
+  "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-overlay-she__TBqj46x",
+  "metrics": {
+    "wall_clock_seconds": 956,
+    "output_tokens": 51872,
+    "step_count": 54
+  },
+  "trajectory": {
+    "path": "trajectories/01-overlay-shell-ui-session-pause-window-lifecycle/grok-4.6-grok-build/trajectory-trial-04.json",
+    "sha256": "d1dce80b9108d3954f60908e1cddd3b7133b50e8bed26781cf5764b79e130e25",
+    "redacted": true
+  }
+}

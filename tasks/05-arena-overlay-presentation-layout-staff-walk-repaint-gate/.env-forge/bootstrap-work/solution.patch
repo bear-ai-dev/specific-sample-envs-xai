@@ -1,0 +1,839 @@
+diff --git a/overlay/restaurant-arena-layout.ts b/overlay/restaurant-arena-layout.ts
+new file mode 100644
+index 0000000..6860700
+--- /dev/null
++++ b/overlay/restaurant-arena-layout.ts
+@@ -0,0 +1,136 @@
++export type ArenaRect = { x: number; y: number; width: number; height: number };
++export type ArenaPoint = { x: number; y: number };
++export type ArenaLocation = "floor" | "kitchen" | "pass" | "queue";
++
++export interface RestaurantArenaLayout {
++  compact: boolean;
++  /**
++   * Text-size multiplier, 1 at the original 520x740 design size, growing
++   * with the window so a resized overlay reads at the same relative size
++   * instead of the same fixed pixel count spread over more canvas. Derived
++   * from whichever axis is tighter, since the scene's row heights are fixed.
++   */
++  scale: number;
++  /** True when the service log sits beside the floor instead of under it. */
++  feedBeside: boolean;
++  /** Clock, transport controls and money, across the top. */
++  topBar: ArenaRect;
++  /**
++   * Manager brief: tonight's target, the running fail-condition tally, and
++   * the one action the shift is waiting on. Sits directly under the top bar
++   * so the story reads top-down — goal, pressure, next move — before the
++   * eye reaches the floor.
++   */
++  brief: ArenaRect;
++  kitchen: ArenaRect;
++  pass: ArenaRect;
++  dining: ArenaRect;
++  /** The door — waiting parties stand here. */
++  door: ArenaRect;
++  /**
++   * Host stand inside the door: the HOLD/OPEN control. Staff walking to the
++   * queue plant on this slab rather than floating in the waiting line.
++   */
++  doorStand: ArenaRect;
++  /**
++   * Resting slots for each staffing zone. Walking interpolates between these
++   * along the hallway spine; the sim still only stores the zone name.
++   */
++  waypoints: Record<ArenaLocation, ArenaPoint>;
++  /** Hallway Y through the pass — walks go node → spine → node, not diagonal. */
++  spineY: number;
++  /** Ticket rail: one card per live order. */
++  tickets: ArenaRect;
++  /** Rolling service log of what the staff are doing and thinking. */
++  feed: ArenaRect;
++}
++
++/**
++ * The whole game lives on the canvas — there is no button strip under it —
++ * so the layout has to find room for the floor, the tickets and the log in
++ * whatever box the overlay gives us.
++ */
++export function restaurantArenaLayout(width: number, height: number): RestaurantArenaLayout {
++  const w = Math.max(320, width);
++  const h = Math.max(240, height);
++  const compact = w < 460 || h < 420;
++  // 520x740 is the original design size every fontSize tier was tuned
++  // against. Both dimensions count: row heights, container heights and
++  // vertical offsets in the scene are still fixed, so scaling text on width
++  // alone would let a wide-and-short window (988x700, say) inflate type to
++  // 1.9x inside rows that never grew, and the top bar and feed would collide.
++  // Taking the smaller ratio keeps text inside whatever the tighter axis
++  // allows. Capped so a very large window doesn't blow text out past legible.
++  const scale = compact ? 1 : Math.min(1.9, Math.max(1, Math.min(w / 520, h / 740)));
++  const gap = compact ? 4 : 6;
++  const margin = compact ? 5 : 8;
++
++  const topBarHeight = compact ? 30 : 38;
++  // Two thin rows: the tally and the last call's receipt, then the one
++  // instruction under them.
++  const briefHeight = compact ? 26 : 32;
++  const ticketsHeight = compact ? 60 : 72;
++
++  // Wide windows get the rat-warren treatment: floor left, log down the
++  // right. Narrow ones stack, because a 150px rail beside a 520px window
++  // leaves no room for a dining room.
++  const feedBeside = w >= 620;
++  const feedWidth = feedBeside ? Math.round(Math.min(240, w * 0.3)) : 0;
++  const feedHeight = feedBeside ? 0 : Math.max(compact ? 84 : 110, Math.round(h * 0.2));
++
++  const bodyX = margin;
++  const briefY = margin + topBarHeight + gap;
++  const bodyY = briefY + briefHeight + gap;
++  const bodyWidth = w - margin * 2 - (feedBeside ? feedWidth + gap : 0);
++  const bodyBottom = h - margin - (feedBeside ? 0 : feedHeight + gap);
++  const bodyHeight = Math.max(120, bodyBottom - bodyY);
++
++  const floorHeight = Math.max(90, bodyHeight - ticketsHeight - gap);
++
++  const kitchenWidth = Math.round(bodyWidth * (compact ? 0.27 : 0.25));
++  const passWidth = Math.max(24, Math.round(bodyWidth * 0.07));
++  const diningX = bodyX + kitchenWidth + gap + passWidth + gap;
++  const diningWidth = Math.max(80, bodyX + bodyWidth - diningX);
++  const doorHeight = Math.max(compact ? 40 : 56, Math.round(floorHeight * (compact ? 0.28 : 0.32)));
++  const diningHeight = floorHeight - doorHeight - gap;
++
++  const kitchen = { x: bodyX, y: bodyY, width: kitchenWidth, height: floorHeight };
++  const pass = { x: bodyX + kitchenWidth + gap, y: bodyY, width: passWidth, height: floorHeight };
++  const dining = { x: diningX, y: bodyY, width: diningWidth, height: diningHeight };
++  const door = { x: diningX, y: bodyY + diningHeight + gap, width: diningWidth, height: doorHeight };
++  const labelH = compact ? 12 : 14;
++  const hostGutter = compact ? 30 : 40;
++  const standWidth = Math.min(compact ? 72 : 90, Math.max(56, Math.round(door.width * 0.36)));
++  const standHeight = Math.min(compact ? 26 : 36, Math.max(22, door.height - labelH - 4));
++  const doorStand = {
++    x: door.x + hostGutter,
++    y: door.y + labelH,
++    width: standWidth,
++    height: standHeight,
++  };
++  const waypoints: Record<ArenaLocation, ArenaPoint> = {
++    kitchen: { x: kitchen.x + kitchen.width - (compact ? 16 : 22), y: kitchen.y + (compact ? 24 : 30) },
++    pass: { x: pass.x + pass.width / 2, y: pass.y + pass.height * 0.25 },
++    floor: { x: dining.x + (compact ? 14 : 18), y: dining.y + dining.height - (compact ? 18 : 24) },
++    queue: { x: door.x + hostGutter / 2, y: doorStand.y + doorStand.height * 0.62 },
++  };
++
++  return {
++    compact,
++    scale,
++    feedBeside,
++    topBar: { x: margin, y: margin, width: w - margin * 2, height: topBarHeight },
++    brief: { x: margin, y: briefY, width: w - margin * 2, height: briefHeight },
++    kitchen,
++    pass,
++    dining,
++    door,
++    doorStand,
++    waypoints,
++    spineY: pass.y + pass.height * 0.55,
++    tickets: { x: bodyX, y: bodyY + floorHeight + gap, width: bodyWidth, height: ticketsHeight },
++    feed: feedBeside
++      ? { x: bodyX + bodyWidth + gap, y: bodyY, width: feedWidth, height: bodyHeight }
++      : { x: margin, y: bodyBottom + gap, width: w - margin * 2, height: feedHeight },
++  };
++}
+diff --git a/overlay/restaurant-arena-repaint-gate.ts b/overlay/restaurant-arena-repaint-gate.ts
+new file mode 100644
+index 0000000..261241e
+--- /dev/null
++++ b/overlay/restaurant-arena-repaint-gate.ts
+@@ -0,0 +1,49 @@
++/**
++ * Decides when the arena scene may repaint.
++ *
++ * A repaint rebuilds the whole display list, so one that lands mid-drag
++ * destroys the token under the pointer and `dragend` never fires. The gate
++ * holds repaints back while a drag is in flight and replays the one it owes
++ * when the drag ends — and treats a resize as the one event that ends a drag
++ * on the scene's behalf, since a resize has to repaint no matter what.
++ */
++export class RepaintGate {
++  private dragging = false;
++  private owed = false;
++
++  get isDragging(): boolean {
++    return this.dragging;
++  }
++
++  beginDrag(): void {
++    this.dragging = true;
++  }
++
++  /** A state update arrived. Returns whether the scene should paint now. */
++  requestPaint(): boolean {
++    if (this.dragging) {
++      this.owed = true;
++      return false;
++    }
++    return true;
++  }
++
++  /** The drag finished. Returns whether a repaint was held back during it. */
++  endDrag(): boolean {
++    this.dragging = false;
++    const owed = this.owed;
++    this.owed = false;
++    return owed;
++  }
++
++  /**
++   * The canvas changed size, so the scene is about to repaint regardless.
++   * That repaint destroys any token being dragged, so the drag is abandoned
++   * here — leaving it open would park every later update in `owed` and freeze
++   * the floor until the next resize.
++   */
++  resize(): void {
++    this.dragging = false;
++    this.owed = false;
++  }
++}
+diff --git a/overlay/restaurant-arena-scene.ts b/overlay/restaurant-arena-scene.ts
+index 495cb11..1a59115 100644
+--- a/overlay/restaurant-arena-scene.ts
++++ b/overlay/restaurant-arena-scene.ts
+@@ -1,4 +1,7 @@
+ import Phaser from "phaser";
++import { restaurantArenaLayout, type ArenaRect, type RestaurantArenaLayout } from "./restaurant-arena-layout.js";
++import { StaffWalker } from "./staff-walk.js";
++import { RepaintGate } from "./restaurant-arena-repaint-gate.js";
+ import { milestoneFeedText } from "./restaurant-arena-milestones.js";
+ import { arenaBrief } from "./restaurant-arena-brief.js";
+ import {
+@@ -61,89 +64,6 @@ export interface RestaurantArenaState {
+   tally?: { walkouts: number; unsafeServed: number };
+ }
+ 
+-type ArenaRect = { x: number; y: number; width: number; height: number };
+-
+-interface RestaurantArenaLayout {
+-  compact: boolean;
+-  feedBeside: boolean;
+-  topBar: ArenaRect;
+-  brief: ArenaRect;
+-  kitchen: ArenaRect;
+-  pass: ArenaRect;
+-  dining: ArenaRect;
+-  door: ArenaRect;
+-  doorStand: ArenaRect;
+-  waypoints: Record<Location, { x: number; y: number }>;
+-  tickets: ArenaRect;
+-  feed: ArenaRect;
+-}
+-
+-function restaurantArenaLayout(width: number, height: number): RestaurantArenaLayout {
+-  const w = Math.max(320, width);
+-  const h = Math.max(240, height);
+-  const compact = false;
+-  const gap = 6;
+-  const margin = 8;
+-
+-  const topBarHeight = 38;
+-  const briefHeight = 32;
+-  const ticketsHeight = 72;
+-  const feedBeside = false;
+-  const feedHeight = Math.max(110, Math.round(h * 0.2));
+-
+-  const bodyX = margin;
+-  const briefY = margin + topBarHeight + gap;
+-  const bodyY = briefY + briefHeight + gap;
+-  const bodyWidth = w - margin * 2;
+-  const bodyBottom = h - margin - (feedHeight + gap);
+-  const bodyHeight = Math.max(120, bodyBottom - bodyY);
+-
+-  const floorHeight = Math.max(90, bodyHeight - ticketsHeight - gap);
+-
+-  const kitchenWidth = Math.round(bodyWidth * 0.25);
+-  const passWidth = Math.max(24, Math.round(bodyWidth * 0.07));
+-  const diningX = bodyX + kitchenWidth + gap + passWidth + gap;
+-  const diningWidth = Math.max(80, bodyX + bodyWidth - diningX);
+-  const doorHeight = Math.max(56, Math.round(floorHeight * 0.32));
+-  const diningHeight = floorHeight - doorHeight - gap;
+-
+-  const kitchen = { x: bodyX, y: bodyY, width: kitchenWidth, height: floorHeight };
+-  const pass = { x: bodyX + kitchenWidth + gap, y: bodyY, width: passWidth, height: floorHeight };
+-  const dining = { x: diningX, y: bodyY, width: diningWidth, height: diningHeight };
+-  const door = { x: diningX, y: bodyY + diningHeight + gap, width: diningWidth, height: doorHeight };
+-  const labelH = 14;
+-  const hostGutter = 40;
+-  const standWidth = Math.min(90, Math.max(56, Math.round(door.width * 0.36)));
+-  const standHeight = Math.min(36, Math.max(22, door.height - labelH - 4));
+-  const doorStand = {
+-    x: door.x + hostGutter,
+-    y: door.y + labelH,
+-    width: standWidth,
+-    height: standHeight,
+-  };
+-  const waypoints: Record<Location, { x: number; y: number }> = {
+-    kitchen: { x: kitchen.x + kitchen.width / 2, y: kitchen.y + kitchen.height / 2 },
+-    pass: { x: pass.x + pass.width / 2, y: pass.y + pass.height / 2 },
+-    floor: { x: dining.x + dining.width / 2, y: dining.y + dining.height / 2 },
+-    queue: { x: door.x + door.width / 2, y: door.y + door.height / 2 },
+-  };
+-
+-  return {
+-    compact,
+-    feedBeside,
+-    topBar: { x: margin, y: margin, width: w - margin * 2, height: topBarHeight },
+-    brief: { x: margin, y: briefY, width: w - margin * 2, height: briefHeight },
+-    kitchen,
+-    pass,
+-    dining,
+-    door,
+-    doorStand,
+-    waypoints,
+-    tickets: { x: bodyX, y: bodyY + floorHeight + gap, width: bodyWidth, height: ticketsHeight },
+-    feed: { x: margin, y: bodyBottom + gap, width: w - margin * 2, height: feedHeight },
+-  };
+-}
+-
+ const COLORS = {
+   ink: 0x241b14,
+   panel: 0x2f241a,
+@@ -229,13 +149,24 @@ export class RestaurantArenaScene extends Phaser.Scene {
+   private onAction: (action: string) => void;
+   /** Host-shell navigation — leaving to the menu, restarting the run — isn't a game action. */
+   private onUi: (action: "menu" | "restart" | "help") => void;
++  /** A repaint mid-drag would delete the token under the pointer. */
++  private readonly gate = new RepaintGate();
++  private layout?: RestaurantArenaLayout;
++  private dropHints: Phaser.GameObjects.Rectangle[] = [];
+   /** Which `state.lastOutcome.id` has already been shown, so a re-render mid-fade doesn't restart it. */
+   private shownOutcomeId?: string;
+   private outcomeToast?: { headline: string; tone: "safe" | "risky" | "neutral"; startedAt: number };
+   private readonly outcomeToastMs = 2600;
+-  /** Rounds a design size into the pixel string Phaser wants. */
++  /**
++   * Every text size in this scene was tuned against the 520x740 design
++   * width, in two fixed tiers (compact/normal). Without this, a bigger
++   * window just spreads those same tiny fixed sizes over more canvas — the
++   * text gets no easier to read, only further apart. `layout.scale` carries
++   * how far the window has grown past that baseline; this rounds a design
++   * size into the actual pixel string Phaser wants.
++   */
+   private fs(px: number): string {
+-    return `${px}px`;
++    return `${Math.round(px * (this.layout?.scale ?? 1))}px`;
+   }
+ 
+   /**
+@@ -272,7 +203,10 @@ export class RestaurantArenaScene extends Phaser.Scene {
+     return Math.round((this.scale.height || 300 * this.dpr) / this.dpr);
+   }
+   private workerStatuses = new Map<Role, RestaurantArenaWorkerStatus>();
++  /** Pixel walkers survive paints; the sim still only stores a zone name. */
++  private readonly walkers = new Map<Role, StaffWalker>();
+   private readonly staffTokens = new Map<Role, Phaser.GameObjects.Container>();
++  private walkClock = 0;
+ 
+   constructor(
+     state: RestaurantArenaState,
+@@ -321,16 +255,51 @@ export class RestaurantArenaScene extends Phaser.Scene {
+     halo.setVisible(false);
+     zone.on("pointerover", () => {
+       halo.setVisible(true);
++      if (tip) this.showTip(rect, tip);
+     });
+     zone.on("pointerout", () => {
+       halo.setVisible(false);
++      this.hideTip();
+     });
+     zone.on("pointerdown", () => {
++      this.hideTip();
+       (dispatch ?? this.onAction)(action);
+     });
+     return zone;
+   }
+ 
++  private tip?: Phaser.GameObjects.Container;
++
++  /** Hover label so a first-time player can read the floor instead of guessing. */
++  private showTip(rect: ArenaRect, text: string): void {
++    this.hideTip();
++    const compact = this.layout?.compact ?? false;
++    const label = this.add.text(0, 0, text, {
++      color: "#2b2118",
++      fontFamily: MONO,
++      fontSize: compact ? this.fs(7) : this.fs(9),
++      fontStyle: "bold",
++      padding: { x: 4, y: 3 },
++    });
++    const width = label.width + 8;
++    const height = label.height + 6;
++    const maxX = this.cssWidth - width - 4;
++    const x = Math.max(4, Math.min(maxX, rect.x + rect.width / 2 - width / 2));
++    // Above the target by default, below it when the target is near the top
++    // edge — a tip that covers the transport controls is worse than none.
++    const above = rect.y - height - 3;
++    const y = above >= 2 ? above : rect.y + rect.height + 3;
++    const bg = this.add.rectangle(0, 0, width, height, COLORS.pass).setOrigin(0, 0);
++    bg.setStrokeStyle(1, COLORS.ink, 0.9);
++    label.setPosition(4, 3);
++    this.tip = this.add.container(x, y, [bg, label]).setDepth(90);
++  }
++
++  private hideTip(): void {
++    this.tip?.destroy();
++    this.tip = undefined;
++  }
++
+   /** A pill button drawn on the canvas: the only kind of button this game has. */
+   private button(
+     rect: ArenaRect,
+@@ -432,7 +401,34 @@ export class RestaurantArenaScene extends Phaser.Scene {
+     this.shownOutcomeId = toastState.shownOutcomeId;
+     this.outcomeToast = toastState.outcomeToast;
+     if (!this.sys.isActive()) return;
+-    this.paint();
++    if (this.gate.requestPaint()) this.paint();
++  }
++
++  /**
++   * Walks live between sim ticks. `paint()` still rebuilds the floor chrome,
++   * but the walker keeps the current pixel so a person can cross the pass
++   * without teleporting when the next state arrives.
++   */
++  update(_time: number, delta: number): void {
++    if (!this.sys.isActive()) return;
++    const speed = this.running ? (this.state.sim?.speed ?? 1) : 0;
++    this.walkClock += delta;
++    for (const [role, walker] of this.walkers) {
++      const moved = walker.step(delta, speed);
++      const token = this.staffTokens.get(role);
++      if (!token || walker.dragging) continue;
++      const figure = token.getByName("figure") as Phaser.GameObjects.Container | undefined;
++      if (walker.walking) {
++        this.tweens.killTweensOf(token);
++        token.setPosition(walker.x, walker.y);
++        const squash = 1 + Math.sin(this.walkClock / 70) * 0.04;
++        figure?.setScale(walker.facing, squash);
++      } else if (moved) {
++        token.setPosition(walker.x, walker.y);
++        figure?.setScale(walker.facing, 1);
++        this.startIdleBob(token, walker.y, role);
++      }
++    }
+   }
+ 
+   private startIdleBob(token: Phaser.GameObjects.Container, restY: number, role: Role): void {
+@@ -451,11 +447,14 @@ export class RestaurantArenaScene extends Phaser.Scene {
+ 
+   private paint(): void {
+     this.tweens.killAll();
++    this.hideTip();
+     this.children.removeAll(true);
+     this.staffTokens.clear();
+     const width = Math.max(320, this.cssWidth);
+     const height = Math.max(240, this.cssHeight);
+     const layout = restaurantArenaLayout(width, height);
++    this.layout = layout;
++    this.dropHints = [];
+     const g = this.add.graphics();
+ 
+     g.fillStyle(COLORS.ink);
+@@ -471,7 +470,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+     this.drawFeed(g, layout);
+     this.drawWorkers(layout);
+     this.drawIncidentBanner(layout);
+-    this.drawOutcomeToast(layout.compact, width, height);
++    this.drawOutcomeToast(width, height);
+     if (!this.state.sim?.started) this.drawPreShift(layout, width, height);
+     else if (this.state.decision) this.drawDecision(layout, width, height);
+   }
+@@ -1095,7 +1094,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+ 
+   private visualLocation(worker: RestaurantArenaState["workers"][number]): Location {
+     // Holding the door plants the host on the stand so the lock is a person,
+-    // not a chip. A host already assigned into the kitchen stays there.
++    // not a chip. A host already dragged into the kitchen stays there.
+     if (
+       worker.role === "host" &&
+       this.state.seatingHeld &&
+@@ -1115,6 +1114,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+   private drawWorkers(layout: RestaurantArenaLayout): void {
+     const compact = layout.compact;
+     const offsets = new Map<Location, number>();
++    const speedReady = Boolean(this.state.sim?.started);
+     this.staffTokens.clear();
+ 
+     for (const worker of this.state.workers) {
+@@ -1122,9 +1122,18 @@ export class RestaurantArenaScene extends Phaser.Scene {
+       const offset = offsets.get(location) ?? 0;
+       offsets.set(location, offset + 1);
+       const slot = this.stackedSlot(location, offset, layout);
++      const waypoints = { ...layout.waypoints, [location]: slot };
++      let walker = this.walkers.get(worker.role);
++      if (!walker) {
++        walker = new StaffWalker(location, slot);
++        this.walkers.set(worker.role, walker);
++      }
++      if (!speedReady) walker.snap(slot, location);
++      else if (!walker.dragging) walker.setTarget(location, waypoints, layout.spineY);
+ 
+-      const token = this.buildAvatar(slot.x, slot.y, worker.role, worker.load, compact);
++      const token = this.buildAvatar(walker.x, walker.y, worker.role, worker.load, compact, walker);
+       this.staffTokens.set(worker.role, token);
++      this.makeWorkerDraggable(token, worker.role, compact ? 8 : 10);
+       const heldHost = worker.role === "host" && Boolean(this.state.seatingHeld) && location === "queue";
+       const status = heldHost ? "acting" : (this.workerStatuses.get(worker.role) ?? this.workerStatus(worker));
+       this.drawWorkerBadge(token, status, compact, heldHost);
+@@ -1244,6 +1253,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+     role: Role,
+     load: number,
+     compact: boolean,
++    walker: StaffWalker,
+   ): Phaser.GameObjects.Container {
+     const unit = compact ? 2 : 2.6;
+     const figureParts = this.avatarFigure(role, unit);
+@@ -1256,6 +1266,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+     }
+     const figure = this.add.container(0, 0, figureParts);
+     figure.setName("figure");
++    figure.setScale(walker.facing, walker.walking ? 1.02 : 1);
+     const parts: Phaser.GameObjects.GameObject[] = [figure];
+     const staff = this.staff(role);
+     const nameTag = this.add
+@@ -1280,7 +1291,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+     const token = this.add.container(x, y, parts);
+     token.setDepth(20);
+     if (clamped > 0.8) this.tweens.add({ targets: fill, alpha: 0.3, duration: 380, yoyo: true, repeat: -1 });
+-    if (this.running) this.startIdleBob(token, y, role);
++    if (this.running && !walker.walking) this.startIdleBob(token, y, role);
+     return token;
+   }
+ 
+@@ -1331,7 +1342,98 @@ export class RestaurantArenaScene extends Phaser.Scene {
+ 
+   setWorkerStatus(role: Role, status: RestaurantArenaWorkerStatus): void {
+     this.workerStatuses.set(role, status);
+-    if (this.sys.isActive()) this.paint();
++    if (this.sys.isActive() && !this.gate.isDragging) this.paint();
++  }
++
++  /** Pick a worker up and drop them in another zone to change what they do. */
++  private makeWorkerDraggable(token: Phaser.GameObjects.Container, role: Role, radius: number): void {
++    let home = { x: token.x, y: token.y };
++    token.setSize(radius * 2 + 8, radius * 3);
++    token.setInteractive({ useHandCursor: true, draggable: true });
++    this.input.setDraggable(token);
++
++    const staff = this.staff(role);
++    token.on("pointerover", () => {
++      if (!this.gate.isDragging) {
++        this.showTip(
++          { x: token.x - 40, y: token.y - radius * 2, width: 80, height: 10 },
++          `${staff.name} — drag to move`,
++        );
++      }
++    });
++    token.on("pointerout", () => this.hideTip());
++
++    token.on("dragstart", () => {
++      home = { x: token.x, y: token.y };
++      this.gate.beginDrag();
++      const walker = this.walkers.get(role);
++      if (walker) walker.dragging = true;
++      this.hideTip();
++      this.tweens.killTweensOf(token);
++      token.setDepth(50);
++      token.setScale(1.15);
++      this.showDropHints(true);
++    });
++    token.on("drag", (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
++      token.setPosition(dragX, dragY);
++      const walker = this.walkers.get(role);
++      if (walker) {
++        walker.x = dragX;
++        walker.y = dragY;
++      }
++    });
++    token.on("dragend", (pointer: Phaser.Input.Pointer) => {
++      const owed = this.gate.endDrag();
++      const walker = this.walkers.get(role);
++      if (walker) walker.dragging = false;
++      token.setScale(1);
++      this.showDropHints(false);
++      const target = this.zoneAt(pointer.x, pointer.y);
++      if (target) {
++        if (walker) walker.node = target;
++        this.onAction(`assign_${role}_${target}`);
++      } else if (walker) {
++        token.setPosition(home.x, home.y);
++        walker.snap({ x: home.x, y: home.y }, walker.node);
++      } else {
++        token.setPosition(home.x, home.y);
++      }
++      if (owed || target) this.paint();
++    });
++  }
++
++  /** Which staffing zone a point falls in, if any. */
++  private zoneAt(x: number, y: number): Location | undefined {
++    const layout = this.layout;
++    if (!layout) return undefined;
++    const zones: Array<[Location, ArenaRect]> = [
++      ["kitchen", layout.kitchen],
++      ["pass", layout.pass],
++      ["floor", layout.dining],
++      ["queue", layout.door],
++    ];
++    for (const [location, rect] of zones) {
++      if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) return location;
++    }
++    return undefined;
++  }
++
++  private showDropHints(visible: boolean): void {
++    const layout = this.layout;
++    if (!layout) return;
++    if (visible && this.dropHints.length === 0) {
++      for (const rect of [layout.kitchen, layout.pass, layout.dining, layout.door]) {
++        const hint = this.add.rectangle(rect.x, rect.y, rect.width, rect.height).setOrigin(0, 0);
++        hint.setStrokeStyle(2, COLORS.pass, 0.95);
++        hint.setDepth(40);
++        this.dropHints.push(hint);
++      }
++      return;
++    }
++    if (!visible) {
++      for (const hint of this.dropHints) hint.destroy();
++      this.dropHints = [];
++    }
+   }
+ 
+   /** Full-width alert while an incident is live. */
+@@ -1370,7 +1472,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+    * every call (right even if a tick landed mid-fade) and hands off to one
+    * tween per paint for the remaining motion.
+    */
+-  private drawOutcomeToast(compact: boolean, width: number, height: number): void {
++  private drawOutcomeToast(width: number, height: number): void {
+     const toast = this.outcomeToast;
+     if (!toast) return;
+     const elapsed = Date.now() - toast.startedAt;
+@@ -1378,6 +1480,7 @@ export class RestaurantArenaScene extends Phaser.Scene {
+       this.outcomeToast = undefined;
+       return;
+     }
++    const compact = this.layout?.compact ?? false;
+     const tone = toast.tone === "safe" ? 0x2f5c46 : toast.tone === "risky" ? 0x6b2f2b : 0x40342a;
+ 
+     const label = this.add.text(0, 0, toast.headline, {
+diff --git a/overlay/staff-walk.ts b/overlay/staff-walk.ts
+new file mode 100644
+index 0000000..75c7918
+--- /dev/null
++++ b/overlay/staff-walk.ts
+@@ -0,0 +1,205 @@
++import type { ArenaLocation, ArenaPoint } from "./restaurant-arena-layout.js";
++
++export type WalkNode = ArenaLocation;
++export type Point = ArenaPoint;
++
++/**
++ * Four station nodes, one hallway. The sim still only knows which room a
++ * person is in; this graph is how the overlay walks them there.
++ */
++export const WALK_GRAPH: Record<WalkNode, readonly WalkNode[]> = {
++  kitchen: ["pass"],
++  pass: ["kitchen", "floor"],
++  floor: ["pass", "queue"],
++  queue: ["floor"],
++};
++
++const NODES: readonly WalkNode[] = ["kitchen", "pass", "floor", "queue"];
++
++/** Pixels per second at 1×. One kitchen→pass hop reads as a walk, not a blink. */
++export const WALK_SPEED_PX_PER_SEC = 200;
++
++export function bfsPath(from: WalkNode, to: WalkNode): WalkNode[] {
++  if (from === to) return [from];
++  const queue: WalkNode[] = [from];
++  const cameFrom = new Map<WalkNode, WalkNode | undefined>([[from, undefined]]);
++  while (queue.length > 0) {
++    const current = queue.shift()!;
++    for (const next of WALK_GRAPH[current]) {
++      if (cameFrom.has(next)) continue;
++      cameFrom.set(next, current);
++      if (next === to) {
++        const path: WalkNode[] = [];
++        let step: WalkNode | undefined = to;
++        while (step !== undefined) {
++          path.push(step);
++          step = cameFrom.get(step);
++        }
++        path.reverse();
++        return path;
++      }
++      queue.push(next);
++    }
++  }
++  return [from, to];
++}
++
++function nearly(a: Point, b: Point, px = 4): boolean {
++  return Math.hypot(a.x - b.x, a.y - b.y) < px;
++}
++
++function pushUnique(points: Point[], next: Point): void {
++  const last = points[points.length - 1];
++  if (last && nearly(last, next, 1.5)) return;
++  points.push(next);
++}
++
++/**
++ * Pixel path from wherever the person currently is, through the station
++ * graph, using the pass as a hallway instead of cutting across tables.
++ */
++export function corridorPoints(
++  start: Point,
++  nodes: readonly WalkNode[],
++  waypoints: Record<WalkNode, Point>,
++  spineY: number,
++): Point[] {
++  const remaining =
++    nodes[0] && nearly(start, waypoints[nodes[0]], 6) ? nodes.slice(1) : [...nodes];
++  const points: Point[] = [{ x: start.x, y: start.y }];
++  for (const node of remaining) {
++    const dest = waypoints[node];
++    const prev = points[points.length - 1]!;
++    if (Math.abs(prev.x - dest.x) > 10) {
++      if (Math.abs(prev.y - spineY) > 6) pushUnique(points, { x: prev.x, y: spineY });
++      if (Math.abs(dest.x - prev.x) > 6) pushUnique(points, { x: dest.x, y: spineY });
++    }
++    pushUnique(points, { x: dest.x, y: dest.y });
++  }
++  return points;
++}
++
++export function hopDurationMs(from: Point, to: Point): number {
++  const dist = Math.hypot(to.x - from.x, to.y - from.y);
++  return Math.max(80, (dist / WALK_SPEED_PX_PER_SEC) * 1000);
++}
++
++function easeInOut(t: number): number {
++  return t < 0.5 ? 2 * t * t : 1 - (Math.pow(-2 * t + 2, 2) / 2);
++}
++
++export class StaffWalker {
++  x: number;
++  y: number;
++  facing: 1 | -1 = 1;
++  walking = false;
++  dragging = false;
++  node: WalkNode;
++  private target?: WalkNode;
++  private points: Point[] = [];
++  private hop = 0;
++  private elapsed = 0;
++  private duration = 1;
++
++  constructor(node: WalkNode, slot: Point) {
++    this.node = node;
++    this.x = slot.x;
++    this.y = slot.y;
++    this.target = node;
++  }
++
++  snap(slot: Point, node: WalkNode): void {
++    this.x = slot.x;
++    this.y = slot.y;
++    this.node = node;
++    this.target = node;
++    this.walking = false;
++    this.points = [];
++    this.hop = 0;
++    this.elapsed = 0;
++  }
++
++  nearestNode(waypoints: Record<WalkNode, Point>): WalkNode {
++    let best: WalkNode = this.node;
++    let bestDist = Infinity;
++    for (const node of NODES) {
++      const dist = Math.hypot(this.x - waypoints[node].x, this.y - waypoints[node].y);
++      if (dist < bestDist) {
++        bestDist = dist;
++        best = node;
++      }
++    }
++    return best;
++  }
++
++  /**
++   * Walk to `target` from the current pixel. Re-paths if the destination
++   * changed mid-stride; no-ops if already idle on that slot.
++   */
++  setTarget(target: WalkNode, waypoints: Record<WalkNode, Point>, spineY: number): void {
++    if (this.dragging) return;
++    const dest = waypoints[target];
++    if (!this.walking && this.node === target && nearly({ x: this.x, y: this.y }, dest, 2)) {
++      return;
++    }
++    if (this.walking && this.target === target) {
++      const last = this.points[this.points.length - 1];
++      if (last && (last.x !== dest.x || last.y !== dest.y)) {
++        this.points[this.points.length - 1] = dest;
++      }
++      return;
++    }
++    const fromNode = this.walking ? this.nearestNode(waypoints) : this.node;
++    const nodes = bfsPath(fromNode, target);
++    const points = corridorPoints({ x: this.x, y: this.y }, nodes, waypoints, spineY);
++    this.target = target;
++    this.points = points;
++    this.hop = 0;
++    this.elapsed = 0;
++    if (points.length < 2) {
++      this.snap(dest, target);
++      return;
++    }
++    this.walking = true;
++    this.duration = hopDurationMs(points[0]!, points[1]!);
++    this.faceToward(points[1]!);
++  }
++
++  /**
++   * Advance along the current corridor. `speed` is the sim multiplier (1/2/4);
++   * 0 freezes the person in place — pause has to feel like a pause.
++   * Returns true if the pixel position changed.
++   */
++  step(dtMs: number, speed: number): boolean {
++    if (this.dragging || !this.walking || this.points.length < 2) return false;
++    if (speed <= 0) return false;
++    const from = this.points[this.hop]!;
++    const to = this.points[this.hop + 1]!;
++    this.elapsed += dtMs * speed;
++    const t = Math.min(1, this.elapsed / this.duration);
++    const eased = easeInOut(t);
++    this.x = from.x + (to.x - from.x) * eased;
++    this.y = from.y + (to.y - from.y) * eased;
++    this.faceToward(to);
++    if (t < 1) return true;
++    this.x = to.x;
++    this.y = to.y;
++    this.hop += 1;
++    this.elapsed = 0;
++    if (this.hop + 1 >= this.points.length) {
++      this.walking = false;
++      this.node = this.target ?? this.node;
++      this.points = [];
++      this.hop = 0;
++      return true;
++    }
++    this.duration = hopDurationMs(this.points[this.hop]!, this.points[this.hop + 1]!);
++    this.faceToward(this.points[this.hop + 1]!);
++    return true;
++  }
++
++  private faceToward(dest: Point): void {
++    const dx = dest.x - this.x;
++    if (Math.abs(dx) > 1) this.facing = dx < 0 ? -1 : 1;
++  }
++}

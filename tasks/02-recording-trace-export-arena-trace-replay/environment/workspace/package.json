@@ -1,0 +1,84 @@
+{
+  "name": "@tui-games/tui",
+  "version": "0.3.4",
+  "description": "Play familiar single-player games in a lightweight HTML overlay while your agents work.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Trolleroof/tui-gamepigeon.git"
+  },
+  "homepage": "https://github.com/Trolleroof/tui-gamepigeon#readme",
+  "bugs": {
+    "url": "https://github.com/Trolleroof/tui-gamepigeon/issues"
+  },
+  "keywords": [
+    "arcade",
+    "overlay",
+    "claude-code",
+    "codex",
+    "games"
+  ],
+  "files": [
+    "dist",
+    "scripts",
+    "src",
+    "packages/trace-export/src",
+    "overlay/dist",
+    ".codex-plugin",
+    ".claude-plugin/plugin.json",
+    "overlay-release.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "gamepigeon": "./scripts/gamepigeon.cjs"
+  },
+  "packageManager": "bun@1.3.11",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start": "bun src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build:overlay:web": "bun scripts/build-overlay-web.ts",
+    "build:overlay": "bun run build:overlay:web && cargo build --release --manifest-path tauri/Cargo.toml",
+    "claude:dev": "bash scripts/dev-harness.sh claude",
+    "codex:dev": "bash scripts/dev-harness.sh codex",
+    "antigravity:dev": "bash scripts/dev-harness.sh antigravity",
+    "dev:overlay": "bun run build:overlay:web && cargo build --manifest-path tauri/Cargo.toml && GAMEPIGEON_OVERLAY_BIN=\"$PWD/tauri/target/debug/gamepigeon-overlay\" bun scripts/overlay.ts --show",
+    "preview:overlay": "bun scripts/preview-overlay.ts",
+    "measure:worker-latency": "bun scripts/measure-worker-latency.ts",
+    "install:adapters": "bash scripts/install-adapters.sh",
+    "install:hooks": "bash scripts/install-git-hooks.sh",
+    "test": "bun test ./src/",
+    "test:trace-export": "bun test packages/trace-export/src",
+    "capture:spike": "bun scripts/capture-tui-001-spike.ts",
+    "test:adapters": "bun run build && bash scripts/install-adapters.test.sh && bash scripts/dev-harness.test.sh",
+    "test:overlay": "bun test scripts/overlay.test.ts scripts/antigravity-hook.test.ts scripts/plugin-update.test.ts scripts/arcade-engagement.test.ts scripts/version-bump.test.ts overlay/persistence.test.ts overlay/recording.test.ts overlay/renderers.test.ts overlay/analytics.test.ts overlay/tauri-bridge.test.ts overlay/pause-state.test.ts overlay/auth.test.ts overlay/update.test.ts overlay/restaurant-arena-timeline.test.ts overlay/restaurant-arena-layout.test.ts overlay/restaurant-arena-brief.test.ts overlay/restaurant-arena-repaint-gate.test.ts overlay/restaurant-arena-toast.test.ts overlay/staff-walk.test.ts scripts/export-bc.test.ts",
+    "test:plugin-update": "bun test scripts/plugin-update.test.ts scripts/run-plugin-update.test.ts",
+    "test:launcher": "bun run test:overlay",
+    "test:npm-pack": "bun test scripts/npm-pack.test.ts",
+    "typecheck": "tsc --noEmit && tsc -p overlay/tsconfig.json && tsc -p packages/trace-export/tsconfig.json",
+    "export:bc": "bun scripts/export-bc.ts",
+    "export:trace": "bun scripts/export-arena-trace.ts",
+    "check:trace-fixture": "bun scripts/export-arena-trace.ts --check",
+    "version:bump": "bun scripts/version-bump.ts",
+    "prepack": "bun run build && bun run build:overlay:web"
+  },
+  "engines": {
+    "bun": ">=1.3"
+  },
+  "devDependencies": {
+    "@tui-games/trace-export": "workspace:*",
+    "@types/bun": "^1.3.5",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "phaser": "^3.90.0",
+    "posthog-node": "^5.44.0"
+  }
+}

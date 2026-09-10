@@ -1,0 +1,11 @@
+Baseline
+$ bash /tests/test.sh
+CLI OAuth handoff: 0 passed, 1 failed, 1 error
+Cloudflare Worker OAuth handoff: 1 passed, 8 failed
+Reward: 0
+
+Reference solution
+$ bash /tests/test.sh
+CLI OAuth handoff: 8 passed, 0 failed
+Cloudflare Worker OAuth handoff: 9 passed, 0 failed
+Reward: 1

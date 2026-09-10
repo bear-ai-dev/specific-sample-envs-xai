@@ -1,0 +1,104 @@
+  <body>
+    <div class="app">
+      <header class="titlebar" data-tauri-drag-region>
+        <button id="account-chip" class="account-chip" type="button" hidden></button>
+        <div class="window-actions">
+          <button id="resize" type="button" aria-label="Expand overlay" title="Expand or compact">↗</button>
+          <button id="hide" type="button" aria-label="Minimize to pill" title="Minimize to a draggable pill">−</button>
+          <button id="shutdown" type="button" aria-label="Shut down for this session" title="Stop opening until the next session">⏻</button>
+        </div>
+      </header>
+
+      <section id="update-loading" class="update-loading" role="status" aria-live="assertive" hidden>
+        <div class="update-loading-card">
+          <img src="tui-logo.png" class="update-tui-logo" alt="Tui Logo" />
+          <h2>Updating Tui…</h2>
+          <p id="update-loading-version">Installing the latest version</p>
+          <p id="update-loading-note" class="update-loading-note">Keep Tui open — your game will restart automatically when finished.</p>
+          <div id="update-manual" class="update-manual" hidden>
+            <code id="update-command" class="update-command"></code>
+            <button id="update-copy-command" type="button" class="update-copy-button">Copy</button>
+          </div>
+        </div>
+      </section>
+
+      <main>
+        <div id="screen" aria-live="polite"></div>
+      </main>
+
+    </div>
+
+    <section id="return-prompt" class="return-prompt" role="dialog" aria-modal="true" aria-labelledby="return-title" hidden>
+      <div class="return-card">
+        <h2 id="return-title">Paused</h2>
+        <div class="return-actions">
+          <button id="return-code" class="primary" type="button"><kbd>Esc</kbd> Back to coding</button>
+          <button id="continue-game" type="button">Continue playing</button>
+          <button id="how-to-play-from-pause" type="button">? How to Play</button>
+          <button id="return-menu" type="button"><kbd>M</kbd> Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-to-play" class="return-prompt" role="dialog" aria-modal="true" aria-labelledby="how-to-play-title" hidden>
+      <div class="return-card how-to-play-card">
+        <h2 id="how-to-play-title">How to Play</h2>
+        <div class="how-to-play-body">
+          <section>
+            <h3>Goal</h3>
+            <p>You are the manager of The Little Plate. Hit the night’s cash target, keep reputation up, and never send an unverified allergy plate. Walkouts and unsafe food fail the shift.</p>
+          </section>
+          <section>
+            <h3>Floor &amp; roles</h3>
+            <ul>
+              <li><strong>Mira (Chef)</strong> cooks only from the kitchen.</li>
+              <li><strong>Dario (Supply &amp; Risk Lead)</strong> runs the pass — tickets and plates.</li>
+              <li><strong>Kip (Server)</strong> works dining and the pass.</li>
+              <li><strong>Vela (Host)</strong> seats the door. Park her on the queue or the floor.</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Controls</h3>
+            <ul>
+              <li>Drag a staff token onto kitchen, pass, dining, or the door.</li>
+              <li>Click a ticket to rush that table (<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>).</li>
+              <li>Click the door to <strong>HOLD</strong> seating when the floor is overloaded — <kbd>H</kbd>.</li>
+              <li><kbd>Space</kbd> starts and pauses. <kbd>F</kbd> changes speed.</li>
+              <li><kbd>V</kbd> verifies an allergy substitution. <kbd>P</kbd> prioritizes the allergy ticket.</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Calls &amp; incidents</h3>
+            <p>When the oven dies, a shelf overheats, or an allergy ticket lands, the clock stops on a decision card. Every option states its price. Talk to staff from the Staff panel — messages land on the next tick, they do not teleport food.</p>
+          </section>
+          <section>
+            <h3>Training Shift</h3>
+            <p>New here? Play <strong>Training Shift</strong> first. It is slower, shorter, and walks the four moves that actually change the night. Dinner Rush is the scored benchmark — keep those traces separate.</p>
+          </section>
+        </div>
+        <div class="return-actions">
+          <button id="how-to-play-close" class="primary" type="button">Got it</button>
+        </div>
+      </div>
+    </section>
+    <section id="signout-prompt" class="return-prompt" role="dialog" aria-modal="true" aria-labelledby="signout-title" hidden>
+      <div class="return-card">
+        <h2 id="signout-title">Sign out of Tui?</h2>
+        <div class="return-actions">
+          <button id="signout-confirm" class="primary" type="button"><kbd>Enter</kbd> Sign out</button>
+          <button id="signout-cancel" type="button">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <button id="pill" class="pill" type="button" aria-label="Reopen Tui" title="Drag to move · click or press Start (A) to reopen">
+      <span class="pill-dpad" aria-hidden="true"></span>
+      <span class="pill-screen">
+        <span class="pill-label pill-label-idle">Tui</span>
+        <span class="pill-label pill-label-hint" aria-hidden="true">Start</span>
+      </span>
+      <span class="pill-buttons" aria-hidden="true"><i></i><i class="pill-btn-a"></i></span>
+    </button>
+
+    <script type="module" src="./app.js"></script>
+  </body>

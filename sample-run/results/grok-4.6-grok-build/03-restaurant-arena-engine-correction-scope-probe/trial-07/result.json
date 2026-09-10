@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "03-restaurant-arena-engine-correction-scope-probe__trial-07",
+  "task": "03-restaurant-arena-engine-correction-scope-probe",
+  "trial_number": 7,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-0b5c41265bd5",
+  "configuration": "grok-4.6-grok-build",
+  "model": "openrouter/x-ai/grok-4.6",
+  "model_label": "Grok 4.6",
+  "route": "x-ai/grok-4.6",
+  "provider": "OpenRouter",
+  "harness": "Grok Build",
+  "agent_version": "1.0.25",
+  "reasoning_effort": "high",
+  "max_output_tokens": 500000,
+  "status": "complete",
+  "reward": 0,
+  "solved": false,
+  "source_trial": "forge-tui-gamepigeon-restaurant__sEyLhXW",
+  "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-restaurant__sEyLhXW",
+  "metrics": {
+    "wall_clock_seconds": 1065,
+    "output_tokens": 51575,
+    "step_count": 53
+  },
+  "trajectory": {
+    "path": "trajectories/03-restaurant-arena-engine-correction-scope-probe/grok-4.6-grok-build/trajectory-trial-07.json",
+    "sha256": "1474104a1ccc1feebb71a593d286ec0c5841a58a26cc7a06969aa788a1bf912a",
+    "redacted": true
+  }
+}

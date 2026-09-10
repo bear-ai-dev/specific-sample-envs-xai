@@ -1,0 +1,56 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs\" \"${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts\" --reset --harness codex",
+            "commandWindows": "node \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\run-with-bun.cjs\" \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\overlay.ts\" --reset --harness codex",
+            "timeout": 15,
+            "statusMessage": "Resetting the Tui overlay..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs\" \"${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts\" --show --harness codex",
+            "commandWindows": "node \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\run-with-bun.cjs\" \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\overlay.ts\" --show --harness codex",
+            "timeout": 15,
+            "statusMessage": "Opening the Tui overlay..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs\" \"${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts\" --pause --harness codex",
+            "commandWindows": "node \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\run-with-bun.cjs\" \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\overlay.ts\" --pause --harness codex",
+            "timeout": 10,
+            "statusMessage": "Pausing the Tui overlay..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs\" \"${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts\" --quit --harness codex",
+            "commandWindows": "node \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\run-with-bun.cjs\" \"$env:CLAUDE_PLUGIN_ROOT\\scripts\\overlay.ts\" --quit --harness codex",
+            "timeout": 3,
+            "statusMessage": "Closing the Tui overlay..."
+          }
+        ]
+      }
+    ]
+  }
+}

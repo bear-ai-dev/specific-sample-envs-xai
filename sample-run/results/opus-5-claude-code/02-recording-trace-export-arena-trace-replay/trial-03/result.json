@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-03",
+  "task": "02-recording-trace-export-arena-trace-replay",
+  "trial_number": 3,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-614ebf4a263e",
+  "configuration": "opus-5-claude-code",
+  "model": "bedrock/us.anthropic.claude-opus-5",
+  "model_label": "Opus 5",
+  "route": "us.anthropic.claude-opus-5",
+  "provider": "Amazon Bedrock",
+  "harness": "Claude Code",
+  "agent_version": "2.1.258",
+  "reasoning_effort": "high",
+  "max_output_tokens": 128000,
+  "status": "complete",
+  "reward": 1,
+  "solved": true,
+  "source_trial": "forge-tui-gamepigeon-recording-t__FFKLy29",
+  "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-recording-t__FFKLy29",
+  "metrics": {
+    "wall_clock_seconds": 1444,
+    "output_tokens": 85620,
+    "step_count": 115
+  },
+  "trajectory": {
+    "path": "trajectories/02-recording-trace-export-arena-trace-replay/opus-5-claude-code/trajectory-trial-03.json",
+    "sha256": "98294ade836bb50365d4a0ac5b3a12c114e6f48f3f5e618103c91ece876aad36",
+    "redacted": true
+  }
+}

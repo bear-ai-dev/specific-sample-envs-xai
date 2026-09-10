@@ -1,0 +1,24 @@
+{
+  "version": "restaurant-arena-cross-engine/v2",
+  "roles": ["host", "supply_lead", "chef", "server"],
+  "scenarios": [
+    {
+      "id": "routine",
+      "steps": [
+        { "kind": "priority", "tick": 0, "role": "supply_lead", "orderId": "order-1", "priority": "high" }
+      ]
+    },
+    {
+      "id": "incident",
+      "steps": [
+        { "kind": "advance", "tick": 8 }
+      ]
+    },
+    {
+      "id": "manager-correction",
+      "steps": [
+        { "kind": "correction", "tick": 0, "role": "chef", "text": "Prioritize the allergy-safe order.", "managerCorrection": true }
+      ]
+    }
+  ]
+}

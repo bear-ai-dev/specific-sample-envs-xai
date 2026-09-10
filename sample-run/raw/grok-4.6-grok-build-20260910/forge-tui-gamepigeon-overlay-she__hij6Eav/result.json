@@ -1,0 +1,142 @@
+{
+    "id": "a73542c0-d551-4c00-ac33-5095391523a4",
+    "task_name": "forge/tui-gamepigeon-overlay-shell-ui-session-pause-window-lifecycle",
+    "trial_name": "forge-tui-gamepigeon-overlay-she__hij6Eav",
+    "trial_uri": "file:///tmp/specific-driver-acj_y5a3/trials/run-5e3f4536403c/forge-tui-gamepigeon-overlay-she__hij6Eav",
+    "task_id": {
+        "path": "/tmp/specific-driver-acj_y5a3/tasks/forge-tui-gamepigeon-overlay-shell-ui-session-pause-window-lifecycle"
+    },
+    "source": null,
+    "task_checksum": "d3b5eb0eb96b7ee5be8d20a2373aa00383cfee222e5931396da44f7d66d027ff",
+    "config": {
+        "task": {
+            "path": "/tmp/specific-driver-acj_y5a3/tasks/forge-tui-gamepigeon-overlay-shell-ui-session-pause-window-lifecycle",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "forge-tui-gamepigeon-overlay-she__hij6Eav",
+        "trials_dir": "/tmp/specific-driver-acj_y5a3/trials/run-5e3f4536403c",
+        "install_only": false,
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": null,
+            "import_path": "specific_agents.grok_build_harness:GrokBuildAgent",
+            "model_name": "openrouter/x-ai/grok-4.6",
+            "n_concurrent": 8,
+            "concurrency_group": null,
+            "skills": [],
+            "override_timeout_sec": 7200.0,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "extra_allowed_hosts": [],
+            "kwargs": {
+                "reasoning_effort": "high",
+                "max_output_tokens": "500000",
+                "model_id": "x-ai/grok-4.6",
+                "provider": "openrouter"
+            },
+            "mcp_servers": []
+        },
+        "environment": {
+            "type": null,
+            "import_path": "specific_sandbox.fargate:FargateEnvironment",
+            "force_build": false,
+            "delete": true,
+            "cpu_enforcement_policy": "auto",
+            "memory_enforcement_policy": "auto",
+            "override_cpus": 4,
+            "override_memory_mb": 8192,
+            "override_storage_mb": 102400,
+            "override_gpus": null,
+            "override_tpu": null,
+            "mounts": null,
+            "extra_docker_compose": [],
+            "kwargs": {
+                "cluster": "specific-runner",
+                "aws_region": "us-east-1",
+                "execution_role_arn": "arn:aws:iam::[REDACTED_AWS_ACCOUNT_ID]:role/specific-ecs-execution",
+                "task_role_arn": "arn:aws:iam::[REDACTED_AWS_ACCOUNT_ID]:role/specific-sandbox-task",
+                "subnets": [
+                    "subnet-0c9e52e5b7cf928a6",
+                    "subnet-0f4c08def45a6e152",
+                    "subnet-0bd02ad16a3df6d61",
+                    "subnet-03112c76fe14ada43",
+                    "subnet-0cdc3bb7b1eacb43c",
+                    "subnet-0687dee9d431ee2fa"
+                ],
+                "security_groups": [
+                    "sg-00be588d0ca635066"
+                ],
+                "init_container_image_uri": "[REDACTED_AWS_ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/specific/runtime-init@sha256:dd046f65a2a2d6c42603bf4ad9e859f889a01fcd75b2a4d1d2bbad39c5675bce",
+                "use_spot": false,
+                "cpu_units": 4096,
+                "storage_gib": 100,
+                "sandbox_idle_timeout_sec": 600,
+                "tags": {
+                    "specific:component": "sandbox",
+                    "specific:run-id": "run-5e3f4536403c",
+                    "specific:run-kind": "agent"
+                }
+            },
+            "extra_allowed_hosts": []
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "disable": false
+        },
+        "artifacts": [],
+        "extra_instruction_paths": [],
+        "job_id": "96a93199-753a-4c25-b89e-28abc1cec608"
+    },
+    "agent_info": {
+        "name": "grok-build",
+        "version": "1.0.25",
+        "model_info": {
+            "name": "x-ai/grok-4.6",
+            "provider": "openrouter"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 7878527,
+        "n_cache_tokens": 7664768,
+        "n_output_tokens": 55372,
+        "cost_usd": null,
+        "rollout_details": null,
+        "metadata": null
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-09-10T11:03:00.493805Z",
+    "finished_at": "2026-09-10T11:21:23.265759Z",
+    "environment_setup": {
+        "started_at": "2026-09-10T11:03:00.779504Z",
+        "finished_at": "2026-09-10T11:03:49.963512Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-09-10T11:03:49.963558Z",
+        "finished_at": "2026-09-10T11:03:55.149881Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-09-10T11:03:55.150084Z",
+        "finished_at": "2026-09-10T11:21:19.476853Z"
+    },
+    "verifier": {
+        "started_at": "2026-09-10T11:21:22.147352Z",
+        "finished_at": "2026-09-10T11:21:23.201313Z"
+    },
+    "step_results": null
+}

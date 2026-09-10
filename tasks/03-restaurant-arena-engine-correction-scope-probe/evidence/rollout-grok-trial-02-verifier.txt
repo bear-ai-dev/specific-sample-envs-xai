@@ -1,0 +1,11 @@
+Configuration: Grok 4.6 with Grok Build
+Trial: 02
+Source trial: forge-tui-gamepigeon-restaurant__UYtDcAS
+Source run: run-0b5c41265bd5
+Reward: 0
+Verifier: 13 passed, 1 failed
+
+Failed check:
+- flags an explicit move to halt service over the shelf as a false positive
+
+Why it failed: An overreaction to the shelf event escapes the scope-control penalty.

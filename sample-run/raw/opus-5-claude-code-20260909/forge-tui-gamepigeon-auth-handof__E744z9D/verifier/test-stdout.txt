@@ -1,0 +1,64 @@
+== CLI OAuth handoff tests (bun test) ==
+== CLI OAuth handoff tests (bun test) ==
+bun test v1.3.11 (af24e281)
+
+src/auth.test.ts:
+(pass) OAuth only accepts Google or GitHub [0.60ms]
+Email: Password: Signed in as person@example.com
+Signed out. Local games were not changed.
+(pass) successful password login returns only pseudonymous analytics context [5.01ms]
+(pass) OAuth callback listener binds before ready resolves and accepts tokens [9.40ms]
+(pass) OAuth callback listener tolerates a redirect that appends ?token to ?state [4.30ms]
+(pass) OAuth callback listener reports why a failed handoff stopped [3.53ms]
+(pass) OAuth callback listener escapes a hostile error description [3.36ms]
+(pass) OAuth callback listener falls back to a free port when the preferred one is taken [7.47ms]
+(pass) Arc gets a real tab over AppleScript instead of a Little Arc window [0.16ms]
+
+ 8 pass
+ 0 fail
+ 29 expect() calls
+Ran 8 tests across 1 file. [70.00ms]
+== Cloudflare Worker OAuth handoff tests (vitest) ==
+== Cloudflare Worker OAuth handoff tests (vitest) ==
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/app/cloudflare/auth-worker[39m
+
+ [31m❯[39m test/oauth-handoff.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 8933[2mms[22m[39m
+     [33m[2m✓[22m[39m preserves the overlay's state nonce when appending the token [33m 5050[2mms[22m[39m
+[31m     [31m×[31m cannot be used to break out of its own redirect script[39m[33m 506[2mms[22m[39m
+     [33m[2m✓[22m[39m refuses to hand a session to a non-localhost target [33m 493[2mms[22m[39m
+     [33m[2m✓[22m[39m refuses a next target that isn't plain http, even on localhost [33m 468[2mms[22m[39m
+     [33m[2m✓[22m[39m explains an unauthenticated handoff instead of hanging the listener [33m 528[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects a provider other than google or github on /cli/oauth [33m 448[2mms[22m[39m
+     [33m[2m✓[22m[39m reports 503 when the requested provider has no configured credentials [33m 492[2mms[22m[39m
+     [33m[2m✓[22m[39m refuses a non-localhost next target on /cli/oauth before starting sign-in [33m 493[2mms[22m[39m
+     [33m[2m✓[22m[39m still serves the generic auth handler and /migrate untouched [33m 454[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/oauth-handoff.test.ts[2m > [22mCLI/browser OAuth handoff[2m > [22mcannot be used to break out of its own redirect script
+[31m[1mAssertionError[22m: expected 401 to be 200 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 401[39m
+
+[36m [2m❯[22m test/oauth-handoff.test.ts:[2m68:29[22m[39m
+    [90m 66|[39m     [35mconst[39m response [33m=[39m [35mawait[39m [34mfetchHandoff[39m([33mCALLBACK[39m)[33m;[39m
+    [90m 67|[39m
+    [90m 68|[39m     [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m200[39m)[33m;[39m
+    [90m   |[39m                             [31m^[39m
+    [90m 69|[39m     [35mconst[39m body [33m=[39m [35mawait[39m response[33m.[39m[34mtext[39m()[33m;[39m
+    [90m 70|[39m     [34mexpect[39m(body)[33m.[39mnot[33m.[39m[34mtoContain[39m([32m"</script><b>"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (9)[39m
+[2m   Start at [22m 13:17:21
+[2m   Duration [22m 9.60s[2m (transform 2.28s, setup 0ms, import 72ms, tests 8.93s, environment 0ms)[22m
+
+reward=0

@@ -1,0 +1,35 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env*
+!.env.example
+.insforge/
+
+# Cloudflare Worker local secrets
+cloudflare/auth-worker/.dev.vars
+cloudflare/auth-worker/.wrangler
+cloudflare/auth-worker/node_modules
+
+# AI agent skills / local tooling
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
+.playwright-mcp/
+
+# Tauri overlay build output
+tauri/target/
+tauri/gen/
+!overlay/dist/
+overlay/dist/*
+!overlay/dist/index.html
+!overlay/dist/tui-logo.png

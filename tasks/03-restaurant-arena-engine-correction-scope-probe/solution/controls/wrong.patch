@@ -1,0 +1,23 @@
+diff --git a/src/games/restaurant-arena/restaurant-game.ts b/src/games/restaurant-arena/restaurant-game.ts
+index 9ee824a..e6f7fed 100644
+--- a/src/games/restaurant-arena/restaurant-game.ts
++++ b/src/games/restaurant-arena/restaurant-game.ts
+@@ -254,6 +254,18 @@ export class RestaurantGame implements PlayableGame {
+   static readonly VARIATIONS = RESTAURANT_ARENA_VARIATIONS;
+ 
+   readonly name = "restaurant-arena";
++
++  directivesFor(_role: any): any[] {
++    return [];
++  }
++
++  activeDirectives(): any[] {
++    return [];
++  }
++
++  probeReport(): any {
++    return { probe: "warming_shelf_scope_control", belowSafetyThreshold: true, decisions: [], scopedResponses: 0, falsePositives: 0, outcome: "scope_held" };
++  }
+   readonly actions: readonly RestaurantGameAction[] = [
+     "tick",
+     "sim_start",

@@ -1,0 +1,97 @@
+diff -ruN '--exclude=node_modules' tmp/solved/cloudflare/auth-worker/src/index.ts tmp/alt/cloudflare/auth-worker/src/index.ts
+--- a/cloudflare/auth-worker/src/index.ts	2026-09-09 07:42:15.282690183 +0000
++++ b/cloudflare/auth-worker/src/index.ts	2026-09-09 07:35:48.972185468 +0000
+@@ -124,7 +124,13 @@
+ 
+     if (url.pathname === "/cli/oauth" && request.method === "GET") {
+       const provider = url.searchParams.get("provider");
+-      if (provider !== "google" && provider !== "github") {
++      const supportedProvider = provider === "google" || provider === "github";
++      const next = url.searchParams.get("next") ?? "http://127.0.0.1:3210/auth/callback";
++      const nextUrl = localhostCallback(next);
++      if (!nextUrl) {
++        return invalidTargetPage();
++      }
++      if (!supportedProvider) {
+         return pageResponse(
+           handoffErrorPage({
+             title: "That sign-in provider isn't supported",
+@@ -134,10 +140,10 @@
+           400,
+         );
+       }
+-      const configured = provider === "github"
+-        ? env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
+-        : env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET;
+-      if (!configured) {
++      const hasCredentials = provider === "github"
++        ? Boolean(env.GITHUB_CLIENT_ID) && Boolean(env.GITHUB_CLIENT_SECRET)
++        : Boolean(env.GOOGLE_CLIENT_ID) && Boolean(env.GOOGLE_CLIENT_SECRET);
++      if (!hasCredentials) {
+         const name = provider === "github" ? "GitHub" : "Google";
+         return pageResponse(
+           handoffErrorPage({
+@@ -151,11 +157,6 @@
+           503,
+         );
+       }
+-      const next = url.searchParams.get("next") ?? "http://127.0.0.1:3210/auth/callback";
+-      const nextUrl = localhostCallback(next);
+-      if (!nextUrl) {
+-        return invalidTargetPage();
+-      }
+ 
+       const handoff = new URL("/cli/handoff", env.BETTER_AUTH_URL);
+       handoff.searchParams.set("next", nextUrl.toString());
+diff -ruN '--exclude=node_modules' tmp/solved/src/auth.ts tmp/alt/src/auth.ts
+--- a/src/auth.ts	2026-09-09 07:42:15.282690183 +0000
++++ b/src/auth.ts	2026-09-09 07:28:16.661568903 +0000
+@@ -154,9 +154,10 @@
+ end tell`;
+ }
+ 
++const ARC_VENDOR_BUNDLE_IDS = new Set(["company.thebrowser.browser", "company.thebrowser.dia"]);
++
+ export function isArcBundle(bundleId: string): boolean {
+-  const id = bundleId.toLowerCase();
+-  return id === "company.thebrowser.browser" || id === "company.thebrowser.dia";
++  return ARC_VENDOR_BUNDLE_IDS.has(bundleId.toLowerCase());
+ }
+ 
+ /** The bundle id macOS hands `https` URLs to, or null when it can't be read. */
+@@ -208,15 +209,27 @@
+  * into the state value. Mirrors `query_param` in `tauri/src/main.rs`.
+  */
+ function callbackParam(query: string, key: string): string | null {
+-  for (const pair of query.split(/[&?]/)) {
+-    const separator = pair.indexOf("=");
+-    if (separator === -1 || pair.slice(0, separator) !== key) continue;
+-    const value = pair.slice(separator + 1).replace(/\+/g, " ");
+-    try {
+-      return decodeURIComponent(value);
+-    } catch {
+-      return value;
++  const prefix = `${key}=`;
++  let cursor = 0;
++  while (cursor < query.length) {
++    const nextBoundary = (() => {
++      const amp = query.indexOf("&", cursor);
++      const q = query.indexOf("?", cursor);
++      if (amp === -1) return q;
++      if (q === -1) return amp;
++      return Math.min(amp, q);
++    })();
++    const pair = nextBoundary === -1 ? query.slice(cursor) : query.slice(cursor, nextBoundary);
++    if (pair.startsWith(prefix)) {
++      const raw = pair.slice(prefix.length).replace(/\+/g, " ");
++      try {
++        return decodeURIComponent(raw);
++      } catch {
++        return raw;
++      }
+     }
++    if (nextBoundary === -1) break;
++    cursor = nextBoundary + 1;
+   }
+   return null;
+ }

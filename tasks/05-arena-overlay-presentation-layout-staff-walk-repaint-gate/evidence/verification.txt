@@ -1,0 +1,11 @@
+Scenario: render the Restaurant Arena briefing at the 520 x 300 compact preview size
+
+Baseline
+Protected verifier: 0 passed, 3 failed, 3 errors
+Reward: 0
+Observed UI: briefing content overflowed and was clipped
+
+Reference solution
+Protected verifier: 14 passed, 0 failed
+Reward: 1
+Observed UI: briefing content fit inside the compact viewport

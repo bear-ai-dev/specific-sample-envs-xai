@@ -1,0 +1,12 @@
+Configuration: Opus 5 with Claude Code
+Trial: 03
+Source trial: forge-tui-gamepigeon-arena-overl__Do8rhNR
+Source run: run-c9bb94efbe6e
+Reward: 0
+Verifier: 13 passed, 1 failed
+Post-QA verdict: FAIR
+
+Failed check:
+- a kitchen-to-door walk rides the hallway spine instead of cutting the room
+
+Why it failed: A no-doubling-back shortcut skipped a required hallway waypoint.

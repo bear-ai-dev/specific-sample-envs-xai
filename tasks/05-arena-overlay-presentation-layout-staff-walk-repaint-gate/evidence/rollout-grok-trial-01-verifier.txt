@@ -1,0 +1,12 @@
+Configuration: Grok 4.6 with Grok Build
+Trial: 01
+Source trial: forge-tui-gamepigeon-arena-overl__2nbjiPP
+Source run: run-9ce2b11b00f3
+Reward: 0
+Verifier: 12 passed, 2 failed
+
+Failed checks:
+- keeps every region visible at compact and expanded sizes
+- puts the service log beside the floor only when there is width for it
+
+Why it failed: One compact region extends below the viewport, and the wide service log overlaps the ticket panel.

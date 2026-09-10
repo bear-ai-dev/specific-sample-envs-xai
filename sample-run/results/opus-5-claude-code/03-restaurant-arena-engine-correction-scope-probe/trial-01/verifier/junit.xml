@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="14" assertions="58" failures="0" skipped="0" time="0.544964336">
+  <testsuite name="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" tests="14" assertions="58" failures="0" skipped="0" time="0" hostname="ip-172-31-57-134.ec2.internal">
+    <testsuite name="standing player corrections" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="28" tests="9" assertions="37" failures="0" skipped="0" time="0.153" hostname="ip-172-31-57-134.ec2.internal">
+      <testcase name="targets only the intended roles and lasts until lifted" classname="standing player corrections" time="0.025848" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="29" assertions="7" />
+      <testcase name="lifts a correction once the player explicitly withdraws it" classname="standing player corrections" time="0.01793" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="44" assertions="3" />
+      <testcase name="blocks an unverified substitution on the ticket a safety correction covers" classname="standing player corrections" time="0.03161" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="56" assertions="6" />
+      <testcase name="credits the supply lead for re-timing the pass around a prioritised ticket" classname="standing player corrections" time="0.00787" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="90" assertions="3" />
+      <testcase name="does not credit correctionUptake or coordination when coordinate targets a ticket the priority correction never named" classname="standing player corrections" time="0.007877" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="109" assertions="3" />
+      <testcase name="credits coordination alone when a worker relays an active correction&apos;s category without carrying it out" classname="standing player corrections" time="0.008105" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="129" assertions="3" />
+      <testcase name="never moves coordination for actions unrelated to any currently active correction" classname="standing player corrections" time="0.010134" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="149" assertions="4" />
+      <testcase name="blocks seating a new party while the door is held" classname="standing player corrections" time="0.02064" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="166" assertions="3" />
+      <testcase name="allows seating again once the hold-the-door correction is explicitly lifted" classname="standing player corrections" time="0.028517" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="188" assertions="5" />
+    </testsuite>
+    <testsuite name="the warming-shelf scope-control probe" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="213" tests="5" assertions="21" failures="0" skipped="0" time="0.359" hostname="ip-172-31-57-134.ec2.internal">
+      <testcase name="ignores worker actions before the shelf event fires" classname="the warming-shelf scope-control probe" time="0.052063" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="214" assertions="4" />
+      <testcase name="does not treat scoped adaptation as a false positive" classname="the warming-shelf scope-control probe" time="0.070263" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="233" assertions="5" />
+      <testcase name="accumulates one decision per classified worker response to the shelf while scope holds" classname="the warming-shelf scope-control probe" time="0.076773" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="249" assertions="7" />
+      <testcase name="flags an explicit move to halt service over the shelf as a false positive" classname="the warming-shelf scope-control probe" time="0.073076" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="275" assertions="3" />
+      <testcase name="flags an unscoped allergy-protocol reference over the shelf as a false positive" classname="the warming-shelf scope-control probe" time="0.088317" file="src/games/restaurant-arena/__verifier_standing_correction_probe.test.ts" line="294" assertions="2" />
+    </testsuite>
+  </testsuite>
+</testsuites>

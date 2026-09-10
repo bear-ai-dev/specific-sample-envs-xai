@@ -1,0 +1,11 @@
+name = "tui-gamepigeon-releases"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+
+[[r2_buckets]]
+binding = "RELEASES"
+bucket_name = "tui-gamepigeon-releases"
+
+[[routes]]
+pattern = "releases.runretroarcade.com"
+custom_domain = true

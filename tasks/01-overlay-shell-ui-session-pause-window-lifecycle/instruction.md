@@ -1,0 +1,2 @@
+Tui's overlay is stuck on the menu: picking a game never actually launches a run, and the window chrome around the board is dead too, so the minimize-to-pill button, the resize toggle, the How to Play guide and the sign-out confirmation all do nothing. Wire the whole session back up: starting a run, pausing when the agent needs you and resuming, restarting mid-run, and ending a shift cleanly, plus the window minimize/restore/resize behavior the README and the on-screen buttons describe, including saving progress so a run can resume on the next launch.
+

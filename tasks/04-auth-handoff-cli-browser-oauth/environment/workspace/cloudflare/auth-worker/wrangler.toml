@@ -1,0 +1,58 @@
+name = "tui-gamepigeon-auth"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The top-level configuration is production. Staging is intentionally absent
+# until its Worker and D1 database have been provisioned; see README.md.
+#
+# Friend setup:
+#   1. npx wrangler login
+#   2. npx wrangler d1 create tui-gamepigeon-auth
+#   3. paste the database_id below
+#   4. set secrets (see README.md)
+#   5. npm run deploy
+#   6. POST https://<worker>/migrate with the operator bearer secret
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tui-gamepigeon-auth"
+database_id = "5c2dd459-738a-446a-902b-a2755c5fc499"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]
+
+# The GameRoom Durable Object backed connect4/2048 multiplayer, both removed.
+# This tells Cloudflare to tear down any objects from the v1 migration; do not
+# delete the v1 entry above, since deploy history must stay append-only.
+[[migrations]]
+tag = "v2"
+deleted_classes = ["GameRoom"]
+
+[vars]
+# Public Worker URL after deploy, e.g. https://tui-gamepigeon-auth.<subdomain>.workers.dev
+BETTER_AUTH_URL = "https://auth.runretroarcade.com"
+# Comma-separated origins allowed to make cross-origin auth requests (CLI localhost + Worker URL)
+BETTER_AUTH_TRUSTED_ORIGINS = "http://127.0.0.1:3210,https://auth.runretroarcade.com,https://runretroarcade.com"
+PUBLIC_GAME_URL = "https://runretroarcade.com"
+
+[env.dev]
+
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "tui-gamepigeon-auth-dev"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[[env.dev.migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]
+
+[[env.dev.migrations]]
+tag = "v2"
+deleted_classes = ["GameRoom"]
+
+[env.dev.vars]
+BETTER_AUTH_URL = "http://localhost:8787"
+BETTER_AUTH_TRUSTED_ORIGINS = "http://127.0.0.1:3210,http://localhost:3210,http://localhost:5173,http://localhost:8787"
+PUBLIC_GAME_URL = "http://localhost:5173"

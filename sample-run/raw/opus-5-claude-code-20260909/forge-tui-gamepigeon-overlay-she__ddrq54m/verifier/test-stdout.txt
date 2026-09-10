@@ -1,0 +1,146 @@
+---- bun test output ----
+bun test v1.3.11 (af24e281)
+
+overlay/app-session.test.ts:
+[preview] invoke(read_update_flag) {}
+[preview] invoke(read_settings) {}
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"a8fa32c5-6f55-4c69-b295-617df4a137d8\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"app.opened\",\"time\":\"2026-09-10T10:05:05.248Z\",\"datacontenttype\":\"application/json\",\"data\":{\"app_version\":\"0.2.0\",\"platform\":\"overlay\"}}",
+}
+[preview] invoke(read_local_scores) {}
+(pass) overlay session, prompt and window lifecycle > boots straight to the arcade menu in browser preview [0.24ms]
+(pass) overlay session, prompt and window lifecycle > opens and closes the how-to-play guide from the menu [3.50ms]
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"b22efd06-29d0-49f5-9de7-2dc29832755f\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"game.started\",\"time\":\"2026-09-10T10:05:05.285Z\",\"datacontenttype\":\"application/json\",\"subject\":\"game_c84b3522-408f-45d6-a160-44cc8791e100\",\"data\":{\"game_type\":\"restaurant-arena\",\"variation_id\":\"tutorial-shift\"}}",
+}
+(pass) overlay session, prompt and window lifecycle > a host launch request starts a real session and persists it locally [39.62ms]
+(pass) overlay session, prompt and window lifecycle > an agent pause freezes the board behind a dialog and resume clears it [63.60ms]
+57 |     click("#how-to-play-from-pause");
+58 |     await settle();
+59 |     expect(howToPlay.hidden).toBe(false);
+60 |     // Opening it swaps which dialog is on top; the pause is still in effect
+61 |     // underneath, so the board must not be showing through unguarded.
+62 |     expect(prompt.hidden).toBe(true);
+                               ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/app/overlay/app-session.test.ts:62:27)
+(fail) overlay session, prompt and window lifecycle > opening How to Play from an agent pause returns to the pause prompt, not the live board [63.79ms]
+101 |  */
+102 | export function onNextPreviewResize(timeoutMs = 2000): Promise<{ width: number; height: number }> {
+103 |   return new Promise((resolve, reject) => {
+104 |     const timer = setTimeout(() => {
+105 |       window.removeEventListener("gamepigeon:preview-resize", handler);
+106 |       reject(new Error("verifier fixture: no gamepigeon:preview-resize event fired"));
+                       ^
+error: verifier fixture: no gamepigeon:preview-resize event fired
+      at <anonymous> (/app/overlay/dom-setup.ts:106:18)
+(fail) overlay session, prompt and window lifecycle > pressing Escape while playing minimizes the window, same as the hide button [2001.72ms]
+(pass) overlay session, prompt and window lifecycle > minimizing drops the native frame to the pill size and restoring lands back on the arcade floor [4.09ms]
+(pass) overlay session, prompt and window lifecycle > expanding and compacting the window swaps between the two frame sizes [0.72ms]
+[preview] invoke(queue_recording_chunks) {
+  chunks: [
+    {
+      schema_version: 2,
+      user_id: "usr_pending",
+      game_id: "game_c84b3522-408f-45d6-a160-44cc8791e100",
+      game_type: "restaurant-arena",
+      game_version: "1",
+      chunk_id: "chk_c84b3522-408f-45d6-a160-44cc8791e100_1",
+      chunk_sequence: 1,
+      first_event_sequence: 1,
+      last_event_sequence: 4,
+      event_count: 4,
+      created_at_ms: 1789034707456,
+      client: [Object ...],
+      events: [
+        [Object ...], [Object ...], [Object ...], [Object ...]
+      ],
+    }
+  ],
+  result: null,
+}
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"edf7bd25-6b0e-4f3a-9f0a-3d5b5de0e055\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"game.ended\",\"time\":\"2026-09-10T10:05:07.459Z\",\"datacontenttype\":\"application/json\",\"subject\":\"game_c84b3522-408f-45d6-a160-44cc8791e100\",\"data\":{\"game_type\":\"restaurant-arena\",\"variation_id\":\"tutorial-shift\",\"outcome\":\"abandoned\",\"score\":0,\"success\":false,\"duration_ms\":2171,\"actions_taken\":0}}",
+}
+(pass) overlay session, prompt and window lifecycle > abandoning a session back to the menu keeps the save resumable [36.02ms]
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"e426d930-f187-4cfc-9a52-a3e427c3c48f\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"game.started\",\"time\":\"2026-09-10T10:05:07.494Z\",\"datacontenttype\":\"application/json\",\"subject\":\"game_da01d0a3-32c0-49f2-badf-695a794a56ec\",\"data\":{\"game_type\":\"restaurant-arena\",\"variation_id\":\"tutorial-shift\"}}",
+}
+(pass) overlay session, prompt and window lifecycle > the menu's resume control relaunches the exact saved run, not a new one [35.51ms]
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"957877d9-22bf-4192-8980-256e11c5cec4\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"game.started\",\"time\":\"2026-09-10T10:05:07.529Z\",\"datacontenttype\":\"application/json\",\"subject\":\"game_4eba79a0-44cf-43ba-9cab-f1fa8dd4c954\",\"data\":{\"game_type\":\"restaurant-arena\",\"variation_id\":\"tutorial-shift\"}}",
+}
+[preview] invoke(queue_recording_chunks) {
+  chunks: [
+    {
+      schema_version: 2,
+      user_id: "usr_pending",
+      game_id: "game_4eba79a0-44cf-43ba-9cab-f1fa8dd4c954",
+      game_type: "restaurant-arena",
+      game_version: "1",
+      chunk_id: "chk_4eba79a0-44cf-43ba-9cab-f1fa8dd4c954_1",
+      chunk_sequence: 1,
+      first_event_sequence: 1,
+      last_event_sequence: 4,
+      event_count: 4,
+      created_at_ms: 1789034707562,
+      client: [Object ...],
+      events: [
+        [Object ...], [Object ...], [Object ...], [Object ...]
+      ],
+    }
+  ],
+  result: null,
+}
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"a7207cac-38d1-4773-acc7-36ed6089247a\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"game.ended\",\"time\":\"2026-09-10T10:05:07.563Z\",\"datacontenttype\":\"application/json\",\"subject\":\"game_4eba79a0-44cf-43ba-9cab-f1fa8dd4c954\",\"data\":{\"game_type\":\"restaurant-arena\",\"variation_id\":\"tutorial-shift\",\"outcome\":\"abandoned\",\"score\":0,\"success\":false,\"duration_ms\":34,\"actions_taken\":0}}",
+}
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"47647659-58b3-4ecf-b73a-3e4231c96d8d\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"game.started\",\"time\":\"2026-09-10T10:05:07.564Z\",\"datacontenttype\":\"application/json\",\"subject\":\"game_c53e4830-cb56-41fe-a1ea-795ba38c4646\",\"data\":{\"game_type\":\"restaurant-arena\",\"variation_id\":\"tutorial-shift\"}}",
+}
+(pass) overlay session, prompt and window lifecycle > restarting a session (from the in-canvas control) replaces the save with a fresh seed [70.63ms]
+[preview] invoke(queue_recording_chunks) {
+  chunks: [
+    {
+      schema_version: 2,
+      user_id: "usr_pending",
+      game_id: "game_c53e4830-cb56-41fe-a1ea-795ba38c4646",
+      game_type: "restaurant-arena",
+      game_version: "1",
+      chunk_id: "chk_c53e4830-cb56-41fe-a1ea-795ba38c4646_1",
+      chunk_sequence: 1,
+      first_event_sequence: 1,
+      last_event_sequence: 4,
+      event_count: 4,
+      created_at_ms: 1789034707598,
+      client: [Object ...],
+      events: [
+        [Object ...], [Object ...], [Object ...], [Object ...]
+      ],
+    }
+  ],
+  result: null,
+}
+[preview] invoke(record_analytics_event) {
+  event: "{\"specversion\":\"1.0\",\"id\":\"2ff569eb-d329-4002-aa0c-8da54b6725aa\",\"source\":\"/tui-gamepigeon/overlay\",\"type\":\"game.ended\",\"time\":\"2026-09-10T10:05:07.599Z\",\"datacontenttype\":\"application/json\",\"subject\":\"game_c53e4830-cb56-41fe-a1ea-795ba38c4646\",\"data\":{\"game_type\":\"restaurant-arena\",\"variation_id\":\"tutorial-shift\",\"outcome\":\"abandoned\",\"score\":0,\"success\":false,\"duration_ms\":34,\"actions_taken\":0}}",
+}
+(pass) overlay session, prompt and window lifecycle > the in-canvas menu control ends the session back at the arcade menu [33.79ms]
+(pass) overlay session, prompt and window lifecycle > signing out asks for confirmation before it takes effect [63.57ms]
+[preview] invoke(sign_out) {}
+(pass) overlay session, prompt and window lifecycle > confirming sign-out clears the session and drops back to the sign-in gate [63.22ms]
+
+src/results/local-score.test.ts:
+(pass) local score completion > builds the existing completed-result fields for a natural completion [0.13ms]
+(pass) local score completion > does not create a score for quit, restart, or shutdown paths [0.03ms]
+
+ 14 pass
+ 2 fail
+ 45 expect() calls
+Ran 16 tests across 2 files. [2.98s]
+---- end bun test output (exit=1) ----
+verifier: parsed junit tests=16 failures=2 (expected at least 16 tests)
+{"reward": 0}

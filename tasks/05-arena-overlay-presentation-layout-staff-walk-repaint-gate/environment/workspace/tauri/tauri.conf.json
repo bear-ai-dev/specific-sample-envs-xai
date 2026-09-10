@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Tui",
+  "version": "0.2.0",
+  "identifier": "com.gamepigeon.arcade.overlay",
+  "build": {
+    "frontendDist": "../overlay/dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' https://us.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": []
+  }
+}

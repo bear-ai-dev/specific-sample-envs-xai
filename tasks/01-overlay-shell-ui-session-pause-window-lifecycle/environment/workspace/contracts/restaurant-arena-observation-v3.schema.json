@@ -1,0 +1,842 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tui-gamepigeon.dev/contracts/restaurant-arena-observation-v3.schema.json",
+  "title": "Restaurant Arena role observation v3",
+  "$comment": "Observations are projections of the same state and carry only what the role is allowed to use. Humans and agents receive the same information; only the interface differs. Selection is by the \"role\" discriminator. v3 retires the host and expediter projections and adds the inspector's: signals the room noticed (no numbers), evidence this Inspector measured for itself, holds, and verifications. The Inspector is deliberately given no worker roster, no other worker's load, and no seating queue - those are what would let a witness drift into being a second scheduler. Adds the Steward's projection: inventory, the ingredient catalog, a windowed demand signal, its own pending orders, past stockouts, and cash on hand. No anomaly ledger, no worker roster, no future schedule. Equipment items may also carry \"reading\" and \"safetyThreshold\", carried forward from v2, so a role can tell a degraded device from one over its safety limit.",
+  "type": "object",
+  "required": [
+    "version",
+    "role",
+    "tick",
+    "load"
+  ],
+  "properties": {
+    "version": {
+      "const": "restaurant-arena-observation/v3"
+    },
+    "role": {
+      "$ref": "#/$defs/role"
+    },
+    "tick": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "load": {
+      "$ref": "#/$defs/load"
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/chefObservation"
+    },
+    {
+      "$ref": "#/$defs/serverObservation"
+    },
+    {
+      "$ref": "#/$defs/inspectorObservation"
+    },
+    {
+      "$ref": "#/$defs/stewardObservation"
+    }
+  ],
+  "$defs": {
+    "arenaId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "maxLength": 64
+    },
+    "role": {
+      "enum": [
+        "chef",
+        "server",
+        "inspector",
+        "steward"
+      ]
+    },
+    "orderStatus": {
+      "enum": [
+        "queued",
+        "seated",
+        "preparing",
+        "ready",
+        "served",
+        "cancelled"
+      ]
+    },
+    "priority": {
+      "enum": [
+        "normal",
+        "high"
+      ]
+    },
+    "load": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "chefObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "role",
+        "tick",
+        "load",
+        "orders",
+        "inventory",
+        "equipment",
+        "holds",
+        "verificationRequests"
+      ],
+      "properties": {
+        "version": {
+          "const": "restaurant-arena-observation/v3"
+        },
+        "role": {
+          "const": "chef"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "load": {
+          "$ref": "#/$defs/load"
+        },
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "items",
+              "priority"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "allergy": {
+                "type": "string",
+                "minLength": 1
+              },
+              "priority": {
+                "$ref": "#/$defs/priority"
+              },
+              "held": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "inventory": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "equipment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "status": {
+                "enum": [
+                  "working",
+                  "failed",
+                  "degraded"
+                ]
+              },
+              "reading": {
+                "$comment": "Measured temperature of the device, in degrees Celsius, when it has a sensor. Present with safetyThreshold so a role can tell a device that is merely degraded from one that has crossed a food-safety limit.",
+                "type": "number"
+              },
+              "safetyThreshold": {
+                "$comment": "The food-safety limit for this device, in degrees Celsius. A reading below it is an operational fault; a reading at or above it is a safety failure.",
+                "type": "number"
+              }
+            }
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deliveredMessage"
+          }
+        },
+        "holds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observedHold"
+          }
+        },
+        "verificationRequests": {
+          "$comment": "Verifications the Inspector addressed to this role and is waiting on.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/openVerification"
+          }
+        }
+      }
+    },
+    "serverObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "role",
+        "tick",
+        "load",
+        "tables",
+        "guestConstraints",
+        "holds",
+        "verificationRequests"
+      ],
+      "properties": {
+        "version": {
+          "const": "restaurant-arena-observation/v3"
+        },
+        "role": {
+          "const": "server"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "load": {
+          "$ref": "#/$defs/load"
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "status",
+              "waitMinutes"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "orderId": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "status": {
+                "$ref": "#/$defs/orderStatus"
+              },
+              "waitMinutes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "held": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "guestConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "orderId",
+              "kind",
+              "value"
+            ],
+            "properties": {
+              "orderId": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "kind": {
+                "enum": [
+                  "allergy",
+                  "dietary",
+                  "timing"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deliveredMessage"
+          }
+        },
+        "holds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observedHold"
+          }
+        },
+        "verificationRequests": {
+          "$comment": "Verifications the Inspector addressed to this role and is waiting on.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/openVerification"
+          }
+        }
+      }
+    },
+    "deliveredMessage": {
+      "type": "object",
+      "additionalProperties": false,
+      "$comment": "One message sent with send_message, visible to its recipient on the observation for the tick after it was sent, and on that tick only.",
+      "required": [
+        "from",
+        "text",
+        "priority",
+        "sentAtTick"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "priority": {
+          "enum": [
+            "normal",
+            "high"
+          ]
+        },
+        "sentAtTick": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "order",
+            "ingredient",
+            "equipment",
+            "handoff"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/arenaId"
+        }
+      }
+    },
+    "observedHold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "subject",
+        "reason",
+        "status",
+        "placedAtTick"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "subject": {
+          "$ref": "#/$defs/subject"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "status": {
+          "enum": [
+            "active",
+            "cleared"
+          ]
+        },
+        "placedAtTick": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "openVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "subject",
+        "question",
+        "requestedAtTick"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "subject": {
+          "$ref": "#/$defs/subject"
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "requestedAtTick": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "inspectorObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "role",
+        "tick",
+        "load",
+        "signals",
+        "evidence",
+        "holds",
+        "verifications",
+        "orders",
+        "equipment"
+      ],
+      "properties": {
+        "version": {
+          "const": "restaurant-arena-observation/v3"
+        },
+        "role": {
+          "const": "inspector"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "load": {
+          "$ref": "#/$defs/load"
+        },
+        "signals": {
+          "$comment": "What the room noticed, with no numbers attached. Turning a signal into a reading costs an inspect - that gap is the role.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "anomalyId",
+              "subject",
+              "kind",
+              "notice",
+              "noticedAtTick",
+              "inspected"
+            ],
+            "properties": {
+              "anomalyId": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "subject": {
+                "$ref": "#/$defs/subject"
+              },
+              "kind": {
+                "enum": [
+                  "temperature",
+                  "allergen_cross_contact",
+                  "hold_time"
+                ]
+              },
+              "notice": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "noticedAtTick": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "inspected": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "evidence": {
+          "$comment": "Readings this Inspector took. The id is what a hold cites.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "subject",
+              "recordedAtTick"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "subject": {
+                "$ref": "#/$defs/subject"
+              },
+              "anomalyId": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "unit": {
+                "enum": [
+                  "celsius",
+                  "ppm",
+                  "minutes"
+                ]
+              },
+              "reading": {
+                "type": "number"
+              },
+              "threshold": {
+                "type": "number"
+              },
+              "recordedAtTick": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "holds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observedHold"
+          }
+        },
+        "verifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "subject",
+              "question",
+              "requestedAtTick",
+              "targetRole",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "subject": {
+                "$ref": "#/$defs/subject"
+              },
+              "question": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "requestedAtTick": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "targetRole": {
+                "enum": [
+                  "chef",
+                  "server"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "open",
+                  "answered"
+                ]
+              },
+              "answer": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "result",
+                  "answeredBy",
+                  "answeredAtTick"
+                ],
+                "properties": {
+                  "result": {
+                    "enum": [
+                      "confirmed",
+                      "refuted"
+                    ]
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  "answeredBy": {
+                    "$ref": "#/$defs/arenaId"
+                  },
+                  "answeredAtTick": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "orders": {
+          "$comment": "Public ticket state only - no inventory, no worker roster.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "status",
+              "priority",
+              "held"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "status": {
+                "$ref": "#/$defs/orderStatus"
+              },
+              "priority": {
+                "$ref": "#/$defs/priority"
+              },
+              "allergy": {
+                "type": "string",
+                "minLength": 1
+              },
+              "held": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "equipment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/arenaId"
+              },
+              "status": {
+                "enum": [
+                  "working",
+                  "failed",
+                  "degraded"
+                ]
+              },
+              "reading": {
+                "$comment": "Measured temperature of the device, in degrees Celsius, when it has a sensor. Present with safetyThreshold so a role can tell a device that is merely degraded from one that has crossed a food-safety limit.",
+                "type": "number"
+              },
+              "safetyThreshold": {
+                "$comment": "The food-safety limit for this device, in degrees Celsius. A reading below it is an operational fault; a reading at or above it is a safety failure.",
+                "type": "number"
+              }
+            }
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deliveredMessage"
+          }
+        }
+      }
+    },
+    "catalogEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ingredient",
+        "unitCost",
+        "leadTicks"
+      ],
+      "properties": {
+        "ingredient": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unitCost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leadTicks": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "demandSignal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ingredient",
+        "recentOrders"
+      ],
+      "properties": {
+        "ingredient": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recentOrders": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "pendingSupplyOrder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "ingredient",
+        "quantity",
+        "placedAtTick",
+        "arrivesAtTick"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "ingredient": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "placedAtTick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "arrivesAtTick": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "observedStockout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ingredient",
+        "tick"
+      ],
+      "properties": {
+        "ingredient": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "stewardObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "role",
+        "tick",
+        "load",
+        "inventory",
+        "catalog",
+        "demandSignal",
+        "pendingOrders",
+        "stockouts",
+        "cashAvailable"
+      ],
+      "properties": {
+        "version": {
+          "const": "restaurant-arena-observation/v3"
+        },
+        "role": {
+          "const": "steward"
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "load": {
+          "$ref": "#/$defs/load"
+        },
+        "inventory": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "catalog": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/catalogEntry"
+          }
+        },
+        "demandSignal": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/demandSignal"
+          }
+        },
+        "pendingOrders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pendingSupplyOrder"
+          }
+        },
+        "stockouts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observedStockout"
+          }
+        },
+        "cashAvailable": {
+          "type": "number"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/deliveredMessage"
+          }
+        }
+      }
+    }
+  }
+}

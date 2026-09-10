@@ -1,0 +1,3 @@
+verifier: copying solver workspace from /app
+verifier: bun exit=1 tests=14 failures=2 errors=0
+verifier: reward=0

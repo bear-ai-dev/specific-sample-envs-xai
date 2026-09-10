@@ -1,0 +1,109 @@
+== CLI OAuth handoff tests (bun test) ==
+== CLI OAuth handoff tests (bun test) ==
+bun test v1.3.11 (af24e281)
+
+src/auth.test.ts:
+(pass) OAuth only accepts Google or GitHub [0.81ms]
+Email: Password: Signed in as person@example.com
+Signed out. Local games were not changed.
+(pass) successful password login returns only pseudonymous analytics context [4.94ms]
+(pass) OAuth callback listener binds before ready resolves and accepts tokens [9.88ms]
+(pass) OAuth callback listener tolerates a redirect that appends ?token to ?state [4.25ms]
+(pass) OAuth callback listener reports why a failed handoff stopped [3.55ms]
+(pass) OAuth callback listener escapes a hostile error description [3.44ms]
+(pass) OAuth callback listener falls back to a free port when the preferred one is taken [7.48ms]
+(pass) Arc gets a real tab over AppleScript instead of a Little Arc window [0.19ms]
+
+ 8 pass
+ 0 fail
+ 29 expect() calls
+Ran 8 tests across 1 file. [70.00ms]
+== Cloudflare Worker OAuth handoff tests (vitest) ==
+== Cloudflare Worker OAuth handoff tests (vitest) ==
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/app/cloudflare/auth-worker[39m
+
+ [31m❯[39m test/oauth-handoff.test.ts [2m([22m[2m9 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 8789[2mms[22m[39m
+     [33m[2m✓[22m[39m preserves the overlay's state nonce when appending the token [33m 4976[2mms[22m[39m
+[31m     [31m×[31m cannot be used to break out of its own redirect script[39m[33m 515[2mms[22m[39m
+     [33m[2m✓[22m[39m refuses to hand a session to a non-localhost target [33m 488[2mms[22m[39m
+     [33m[2m✓[22m[39m refuses a next target that isn't plain http, even on localhost [33m 457[2mms[22m[39m
+     [33m[2m✓[22m[39m explains an unauthenticated handoff instead of hanging the listener [33m 520[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects a provider other than google or github on /cli/oauth [33m 440[2mms[22m[39m
+     [33m[2m✓[22m[39m reports 503 when the requested provider has no configured credentials [33m 461[2mms[22m[39m
+     [33m[2m✓[22m[39m refuses a non-localhost next target on /cli/oauth before starting sign-in [33m 489[2mms[22m[39m
+     [33m[2m✓[22m[39m still serves the generic auth handler and /migrate untouched [33m 441[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/oauth-handoff.test.ts[2m > [22mCLI/browser OAuth handoff[2m > [22mcannot be used to break out of its own redirect script
+[31m[1mAssertionError[22m: expected '<!doctype html>\n<html lang="en">\n<h…' not to contain '</script><b>'[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- <[7m/script><b[27m>[39m
+[31m+ <[7m!doctype html>[27m[39m
+[31m+ <html lang="en">[39m
+[31m+ <head>[39m
+[31m+ <meta charset="utf-8">[39m
+[31m+ <meta name="viewport" content="width=device-width, initial-scale=1">[39m
+[31m+ <meta name="robots" content="noindex">[39m
+[31m+ <title>Tui — You&#39;re signed in</title>[39m
+[31m+ <meta http-equiv="refresh" content="0;url=http://127.0.0.1:54321/auth/callback?state=nonce123&amp;token=&lt;/script&gt;&lt;b&gt;x">[39m
+[31m+ <style>:root{color-scheme:light}[39m
+[31m+ *{box-sizing:border-box}[39m
+[31m+ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;[39m
+[31m+ background:radial-gradient(900px 500px at 50% -20%,#fff 0%,#eef2f8 60%,#e3eaf4 100%);color:#0f172a;[39m
+[31m+ font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}[39m
+[31m+ .card{position:relative;overflow:hidden;width:min(100%,420px);padding:34px 28px 30px;text-align:center;[39m
+[31m+ background:#fff;border:1px solid #e2e8f0;border-radius:16px;[39m
+[31m+ box-shadow:0 20px 50px rgba(15,23,42,.12),0 8px 20px rgba(15,23,42,.06)}[39m
+[31m+ .card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;[39m
+[31m+ background:linear-gradient(90deg,#2955c9 0%,#3772ff 38%,#3bb273 72%,#e6a830 100%)}[39m
+[31m+ .badge{display:flex;align-items:center;justify-content:center;width:44px;height:44px;margin:0 auto 16px;border-radius:999px}[39m
+[31m+ .badge svg{width:22px;height:22px}[39m
+[31m+ [data-tone=ok] .badge{background:rgba(59,178,115,.14);color:#2e8f5c}[39m
+[31m+ [data-tone=warn] .badge{background:rgba(223,41,53,.12);color:#b81f2a}[39m
+[31m+ .eyebrow{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#2955c9}[39m
+[31m+ h1{margin:0 0 10px;font-size:23px;line-height:1.25;letter-spacing:-.01em}[39m
+[31m+ .lead{margin:0;color:#475569}[39m
+[31m+ .steps{margin:18px 0 0;padding:0;list-style:none;text-align:left;border-top:1px solid #e2e8f0}[39m
+[31m+ .steps li{position:relative;margin:0;padding:10px 0 0 18px;font-size:13.5px;color:#475569}[39m
+[31m+ .steps li:first-child{padding-top:14px}[39m
+[31m+ .steps li::before{content:"";position:absolute;left:2px;top:18px;width:5px;height:5px;border-radius:999px;background:#cbd5e1}[39m
+[31m+ .steps li:first-child::before{top:22px}[39m
+[31m+ .hint{margin:16px 0 0;font-size:12.5px;color:#64748b}[39m
+[31m+ code{font:600 12.5px/1.4 ui-monospace,"SF Mono",Menlo,monospace;background:#f3f6fb;border:1px solid #e2e8f0;border-radius:5px;padding:2px 5px;overflow-wrap:anywhere;-webkit-box-decoration-break:clone;box-decoration-break:clone}[39m
+[31m+ @media (max-width:400px){.card{padding:28px 20px 24px}h1{font-size:21px}}</style>[39m
+[31m+ </head>[39m
+[31m+ <body>[39m
+[31m+ <main class="card" data-tone="ok">[39m
+[31m+ <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>[39m
+[31m+ <p class="eyebrow">Tui</p>[39m
+[31m+ <h1>You&#39;re signed in</h1>[39m
+[31m+ <p class="lead">Handing this session back to Tui in your terminal…</p>[39m
+[31m+[39m
+[31m+ <p class="hint">Not moving? <a href="http://127.0.0.1:54321/auth/callback?state=nonce123&amp;token=&lt;/script&gt;&lt;b&gt;x">Continue to Tui</a>, then close this tab.</p>[39m
+[31m+ </main>[39m
+[31m+ <script>location.replace("http://127.0.0.1:54321/auth/callback?state=nonce123&token=</script><b>x")</script>[39m
+[31m+ </body>[39m
+[31m+ [7m</html[27m>[39m
+
+[36m [2m❯[22m test/oauth-handoff.test.ts:[2m70:22[22m[39m
+    [90m 68|[39m     [34mexpect[39m(response[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m200[39m)[33m;[39m
+    [90m 69|[39m     [35mconst[39m body [33m=[39m [35mawait[39m response[33m.[39m[34mtext[39m()[33m;[39m
+    [90m 70|[39m     [34mexpect[39m(body)[33m.[39mnot[33m.[39m[34mtoContain[39m([32m"</script><b>"[39m)[33m;[39m
+    [90m   |[39m                      [31m^[39m
+    [90m 71|[39m   })[33m;[39m
+    [90m 72|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m8 passed[39m[22m[90m (9)[39m
+[2m   Start at [22m 13:59:48
+[2m   Duration [22m 9.45s[2m (transform 2.25s, setup 0ms, import 72ms, tests 8.79s, environment 0ms)[22m
+
+reward=0

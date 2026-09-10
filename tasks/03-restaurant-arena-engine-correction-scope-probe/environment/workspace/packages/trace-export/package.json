@@ -1,0 +1,27 @@
+{
+  "name": "@tui-games/trace-export",
+  "version": "0.1.0",
+  "description": "Shared trace schema and behavior-cloning join logic for tui-gamepigeon recordings.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Trolleroof/tui-gamepigeon.git",
+    "directory": "packages/trace-export"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "devDependencies": {
+    "@types/bun": "^1.3.5",
+    "typescript": "^5.6.0"
+  }
+}

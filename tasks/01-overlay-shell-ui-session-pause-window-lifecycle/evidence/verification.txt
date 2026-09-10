@@ -1,0 +1,11 @@
+Scenario: open Restaurant Arena, then choose Training Shift
+
+Baseline
+Protected verifier: 3 passed, 13 failed
+Reward: 0
+Observed UI: remained on room selection after choosing Training Shift
+
+Reference solution
+Protected verifier: 16 passed, 0 failed
+Reward: 1
+Observed UI: opened the playable arena after choosing Training Shift

@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "02-recording-trace-export-arena-trace-replay__trial-07",
+  "task": "02-recording-trace-export-arena-trace-replay",
+  "trial_number": 7,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-2e4ba03c28b4",
+  "configuration": "grok-4.6-grok-build",
+  "model": "openrouter/x-ai/grok-4.6",
+  "model_label": "Grok 4.6",
+  "route": "x-ai/grok-4.6",
+  "provider": "OpenRouter",
+  "harness": "Grok Build",
+  "agent_version": "1.0.25",
+  "reasoning_effort": "high",
+  "max_output_tokens": 500000,
+  "status": "complete",
+  "reward": 1,
+  "solved": true,
+  "source_trial": "forge-tui-gamepigeon-recording-t__gehKhVH",
+  "raw_dir": "sample-run/raw/grok-4.6-grok-build-20260910/forge-tui-gamepigeon-recording-t__gehKhVH",
+  "metrics": {
+    "wall_clock_seconds": 910,
+    "output_tokens": 52606,
+    "step_count": 35
+  },
+  "trajectory": {
+    "path": "trajectories/02-recording-trace-export-arena-trace-replay/grok-4.6-grok-build/trajectory-trial-07.json",
+    "sha256": "98487a61ba2815e84b7c6b9016d5a94c100728e28572984ecf9fd4c44b7f85a2",
+    "redacted": true
+  }
+}

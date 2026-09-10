@@ -1,0 +1,277 @@
+name: Overlay
+
+# Nothing here runs on an ordinary push or PR. The only trigger is an explicit
+# release tag: after `bun run version:bump`, push a matching tag —
+#   git tag overlay-v<version> && git push origin overlay-v<version>
+# — and the `gate` job confirms the tag's version has no release yet.
+# Everything else — checks, native builds, publishing — hangs off that gate.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "overlay-v*"
+
+concurrency:
+  group: overlay-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    # Cheap arbiter: resolves the release tag and decides whether anything
+    # else runs. A tag push is the explicit release command, so it's keyed on
+    # github.ref_name (the tag itself), not package.json. workflow_dispatch
+    # falls back to package.json's version for ad-hoc manual runs.
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      build: ${{ steps.gate.outputs.build }}
+      release: ${{ steps.gate.outputs.release }}
+      tag: ${{ steps.gate.outputs.tag }}
+      version: ${{ steps.gate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: gate
+        run: |
+          if [ "${{ github.event_name }}" = push ]; then
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#overlay-v}"
+            PKG_VERSION="$(jq -r .version package.json)"
+            if [ "$VERSION" != "$PKG_VERSION" ]; then
+              echo "Tag $TAG doesn't match package.json version $PKG_VERSION." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+          else
+            VERSION="$(jq -r .version package.json)"
+            TAG="overlay-v${VERSION}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            RELEASE=false
+            echo "$TAG already released; nothing to do." >> "$GITHUB_STEP_SUMMARY"
+          else
+            RELEASE=true
+            echo "Releasing $TAG." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "release=$RELEASE" >> "$GITHUB_OUTPUT"
+          if [ "$RELEASE" = true ] || [ "${{ github.event_name }}" = workflow_dispatch ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  check:
+    needs: gate
+    if: needs.gate.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test:overlay
+      - run: bun run test:npm-pack
+
+  build:
+    # Gated twice: on the version bump, and on `check`, so a failing test never
+    # burns native build minutes.
+    needs: [gate, check]
+    if: needs.gate.outputs.build == 'true'
+    strategy:
+      matrix:
+        os: [macos-14, windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+      - run: bun install --frozen-lockfile
+      - run: bun run build:overlay
+        env:
+          POSTHOG_CAPTURE_KEY: ${{ secrets.POSTHOG_CAPTURE_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gamepigeon-overlay-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            tauri/target/release/gamepigeon-overlay
+            tauri/target/release/gamepigeon-overlay.exe
+          if-no-files-found: error
+
+  build-fedora:
+    needs: [gate, check]
+    if: needs.gate.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - name: Install Fedora dependencies
+        run: |
+          dnf install -y \
+            @c-development \
+            git \
+            curl \
+            wget \
+            file \
+            tar \
+            gzip \
+            unzip \
+            webkit2gtk4.1-devel \
+            openssl-devel \
+            libappindicator-gtk3-devel \
+            librsvg2-devel \
+            libxdo-devel
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - uses: dtolnay/rust-toolchain@stable
+      - run: bun install --frozen-lockfile
+      - run: bun run build:overlay
+        env:
+          POSTHOG_CAPTURE_KEY: ${{ secrets.POSTHOG_CAPTURE_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gamepigeon-overlay-Fedora-X64
+          path: tauri/target/release/gamepigeon-overlay
+          if-no-files-found: error
+
+  release:
+    # Publish binaries and bump the update manifest so installed plugins
+    # download the new overlay on their next session.
+    if: |
+      github.event_name == 'push'
+      && needs.gate.outputs.release == 'true'
+    needs: [gate, check, build, build-fedora]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Stage release assets
+        run: |
+          mkdir -p release
+          cp artifacts/gamepigeon-overlay-macOS-ARM64/gamepigeon-overlay release/gamepigeon-overlay-macos-arm64
+          cp artifacts/gamepigeon-overlay-Windows-X64/gamepigeon-overlay.exe release/gamepigeon-overlay-windows-x64.exe
+          cp artifacts/gamepigeon-overlay-Linux-X64/gamepigeon-overlay release/gamepigeon-overlay-ubuntu-x64
+          cp artifacts/gamepigeon-overlay-Linux-X64/gamepigeon-overlay release/gamepigeon-overlay-linux-x64
+          cp artifacts/gamepigeon-overlay-Fedora-X64/gamepigeon-overlay release/gamepigeon-overlay-fedora-x64
+      - name: Build release manifest
+        # sha256 + size per asset, so the public CDN download in scripts/overlay.ts
+        # can verify what it fetched instead of trusting the transport.
+        env:
+          TAG: ${{ needs.gate.outputs.tag }}
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const crypto = require("crypto");
+            const dir = "release";
+            const assets = {};
+            for (const name of fs.readdirSync(dir)) {
+              const buf = fs.readFileSync(`${dir}/${name}`);
+              assets[name] = { sha256: crypto.createHash("sha256").update(buf).digest("hex"), size: buf.length };
+            }
+            const manifest = { version: process.env.VERSION, tag: process.env.TAG, assets };
+            fs.writeFileSync("release/manifest.json", JSON.stringify(manifest, null, 2) + "\n");
+            console.log(JSON.stringify(manifest, null, 2));
+          '
+      - name: Create release
+        run: |
+          gh release create "${{ needs.gate.outputs.tag }}" release/* \
+            --title "Overlay ${{ needs.gate.outputs.version }}" \
+            --notes "Automated overlay build for ${GITHUB_SHA}."
+      - name: Publish release assets to Cloudflare R2
+        # Public, unauthenticated download endpoint (cloudflare/releases-worker):
+        # a fresh npm install has no GitHub credentials and this repo is private,
+        # so GitHub Releases can't serve the binary to end users. Requires
+        # CLOUDFLARE_API_TOKEN (R2 Storage: Edit, scoped to the runretroarcade
+        # account) and CLOUDFLARE_ACCOUNT_ID as repo secrets; skips gracefully
+        # if they're not configured yet.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TAG: ${{ needs.gate.outputs.tag }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID not set; skipping R2 publish." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          for f in release/gamepigeon-overlay-*; do
+            name="$(basename "$f")"
+            npx -y wrangler@4 r2 object put "tui-gamepigeon-releases/$TAG/$name" \
+              --file "$f" --content-type application/octet-stream --remote
+          done
+          npx -y wrangler@4 r2 object put "tui-gamepigeon-releases/$TAG/manifest.json" \
+            --file "release/manifest.json" --content-type application/json --remote
+          # Root pointer: what a fresh install with no pinned tag checks first.
+          npx -y wrangler@4 r2 object put "tui-gamepigeon-releases/manifest.json" \
+            --file "release/manifest.json" --content-type application/json --remote
+      - name: Commit update manifest
+        run: |
+          TAG="${{ needs.gate.outputs.tag }}"
+          VERSION="${{ needs.gate.outputs.version }}"
+          printf '{\n  "tag": "%s",\n  "version": "%s"\n}\n' "$TAG" "$VERSION" > overlay-release.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add overlay-release.json
+          git commit -m "Point overlay auto-update at $TAG"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+  publish-npm:
+    # Same version gate as overlay binaries: tag push when release is new.
+    if: |
+      github.event_name == 'push'
+      && needs.gate.outputs.release == 'true'
+    needs: [gate, check, release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Align overlay-release manifest with this tag
+        run: |
+          TAG="${{ needs.gate.outputs.tag }}"
+          VERSION="${{ needs.gate.outputs.version }}"
+          printf '{\n  "tag": "%s",\n  "version": "%s"\n}\n' "$TAG" "$VERSION" > overlay-release.json
+      - run: bun install --frozen-lockfile
+      - run: bun run build && bun run build:overlay:web
+      - name: Publish to npm when version is new
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION="${{ needs.gate.outputs.version }}"
+          if npm view "tui-gamepigeon@${VERSION}" version >/dev/null 2>&1; then
+            echo "tui-gamepigeon@${VERSION} already on npm; skipping publish." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "NPM_TOKEN not set; skipping npm publish." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          npm publish --access public
+          echo "Published tui-gamepigeon@${VERSION} to npm." >> "$GITHUB_STEP_SUMMARY"

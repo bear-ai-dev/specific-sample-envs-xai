@@ -1,0 +1,29 @@
+---- bun test stdout ----
+bun test v1.3.11 (af24e281)
+---- bun test stderr ----
+
+overlay/restaurant-arena-repaint-gate.test.ts:
+(pass) RepaintGate > paints straight through when nothing is being dragged [0.10ms]
+(pass) RepaintGate > holds repaints back during a drag and replays one at the end [0.06ms]
+(pass) RepaintGate > owes nothing when a drag ends without a state update [0.03ms]
+(pass) RepaintGate > a resize mid-drag abandons the drag so the floor keeps updating [0.05ms]
+(pass) RepaintGate > a late dragend after a resize does not force a stale repaint [0.02ms]
+
+overlay/restaurant-arena-layout.test.ts:
+(pass) restaurantArenaLayout > keeps every region visible at compact and expanded sizes [0.93ms]
+(pass) restaurantArenaLayout > text scale follows the tighter axis, not just width [0.42ms]
+(pass) restaurantArenaLayout > plants staff waypoints inside their zones and runs the hallway through the pass [0.33ms]
+(pass) restaurantArenaLayout > puts the service log beside the floor only when there is width for it [0.08ms]
+
+overlay/staff-walk.test.ts:
+(pass) staff corridor > kitchen to the door goes through the pass and dining, never a shortcut [0.16ms]
+(pass) staff corridor > a kitchen-to-door walk rides the hallway spine instead of cutting the room [0.23ms]
+(pass) staff corridor > more hops take longer than a single station slide [0.07ms]
+(pass) staff corridor > retargeting mid-walk starts from the current pixel, not the old station [0.31ms]
+(pass) staff corridor > pause does not advance the walk [0.07ms]
+
+ 14 pass
+ 0 fail
+ 279 expect() calls
+Ran 14 tests across 3 files. [17.00ms]
+Parsed JUnit summary: tests=14 failures=0 errors=0 (expected >= 14 tests)

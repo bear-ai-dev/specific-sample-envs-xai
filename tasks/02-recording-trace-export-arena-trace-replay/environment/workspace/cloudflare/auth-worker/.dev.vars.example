@@ -1,0 +1,8 @@
+# Required for local `wrangler dev`
+BETTER_AUTH_SECRET=replace-with-a-long-random-string
+
+# Optional OAuth
+# GOOGLE_CLIENT_ID=
+# GOOGLE_CLIENT_SECRET=
+# GITHUB_CLIENT_ID=
+# GITHUB_CLIENT_SECRET=

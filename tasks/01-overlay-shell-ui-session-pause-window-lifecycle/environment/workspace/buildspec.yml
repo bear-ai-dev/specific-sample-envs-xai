@@ -1,0 +1,14 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+  build:
+    commands:
+      - docker build -f "$DOCKERFILE" -t "$IMAGE_URI" "$CONTEXT"
+  post_build:
+    commands:
+      - docker push "$IMAGE_URI"
+      - DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_URI")
+      - echo "$DIGEST" > /tmp/image-digest.txt
+      - aws s3 cp /tmp/image-digest.txt "s3://$BUILD_SRC_BUCKET/builds/$BUILD_ID/digest.txt"

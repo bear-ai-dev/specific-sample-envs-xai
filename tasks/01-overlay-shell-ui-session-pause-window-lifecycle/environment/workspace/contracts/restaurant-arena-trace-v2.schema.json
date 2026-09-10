@@ -1,0 +1,370 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tui-gamepigeon.dev/contracts/restaurant-arena-trace-v2.schema.json",
+  "title": "Restaurant Arena trace v2",
+  "$comment": "One episode's reviewable record. v2 carries the three-role roster and gives the Inspector's decisions their own event kinds - inspection, hold, hold_cleared, verification_request, verification_response, escalation, handoff - so a deterministic grader reads what happened instead of re-parsing tool arguments. Deletion is an explicit field and is never inferred from missing data. Adds the Steward's kinds: supply_order, supply_delivered, and stockout.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "episodeId",
+    "seed",
+    "envVersion",
+    "contractVersion",
+    "runKind",
+    "initialState",
+    "events",
+    "deletion"
+  ],
+  "properties": {
+    "version": {
+      "const": "restaurant-arena-trace/v2"
+    },
+    "episodeId": {
+      "$ref": "#/$defs/arenaId"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "envVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contractVersion": {
+      "const": "restaurant-arena/v2"
+    },
+    "runKind": {
+      "$comment": "Live gameplay, synthetic episodes, and benchmark episodes must stay distinguishable.",
+      "enum": [
+        "live",
+        "synthetic",
+        "benchmark"
+      ]
+    },
+    "initialState": {
+      "$comment": "The world at tick 0, so the episode replays from its seed. Required: a trace that cannot be replayed cannot be re-graded.",
+      "$ref": "https://tui-gamepigeon.dev/contracts/restaurant-arena-state-v2.schema.json"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/traceEvent"
+      }
+    },
+    "deletion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "status"
+      ],
+      "properties": {
+        "requestId": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/arenaId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "retained",
+            "requested",
+            "deleted"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "arenaId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "maxLength": 64
+    },
+    "traceEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tick",
+        "kind",
+        "timestamp",
+        "stateHash"
+      ],
+      "properties": {
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "enum": [
+            "observation",
+            "action",
+            "player_correction",
+            "message",
+            "outcome",
+            "inspection",
+            "hold",
+            "hold_cleared",
+            "verification_request",
+            "verification_response",
+            "escalation",
+            "handoff",
+            "supply_order",
+            "supply_delivered",
+            "stockout"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actorId": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "role": {
+          "enum": [
+            "chef",
+            "server",
+            "inspector",
+            "steward"
+          ]
+        },
+        "targetRole": {
+          "enum": [
+            "chef",
+            "server",
+            "inspector",
+            "steward"
+          ]
+        },
+        "checkpointId": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "stateHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "model": {
+          "$comment": "Absent for human and environment events.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "name"
+          ],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "requestId": {
+          "$ref": "#/$defs/arenaId"
+        },
+        "idempotencyKey": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,129}$",
+          "maxLength": 130
+        },
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observation": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "action": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "toolResult": {
+          "$comment": "The tool's own result body. Three keys are reserved so a grader can sort failures without parsing domain fields: `ok` is false for every rejected or failed call, `error` carries the rejection, and `latencyMs` is the model or tool round trip. Domain keys (status, and anything else the tool returns) stay alongside them.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "ok": {
+              "$comment": "False on every failed or rejected call. Filter on this to select failures.",
+              "type": "boolean"
+            },
+            "latencyMs": {
+              "$comment": "Round trip of the model or tool call in milliseconds. Absent for simulated events with no call behind them.",
+              "type": "number",
+              "minimum": 0
+            },
+            "error": {
+              "$comment": "Present whenever ok is false.",
+              "type": [
+                "object",
+                "null"
+              ],
+              "required": [
+                "code",
+                "message"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "retryable": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "allOf": [
+            {
+              "$comment": "A failed call must carry the error body a grader sorts on.",
+              "if": {
+                "properties": {
+                  "ok": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "ok"
+                ]
+              },
+              "then": {
+                "required": [
+                  "error"
+                ],
+                "properties": {
+                  "error": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            {
+              "$comment": "An error body means the call failed, so ok must say so. Otherwise a consumer filtering on `ok` and one filtering on error presence disagree about the same event.",
+              "if": {
+                "required": [
+                  "error"
+                ],
+                "properties": {
+                  "error": {
+                    "type": "object"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "outcome": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "correctionRationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "correctionCategory": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "safety",
+            "priority",
+            "quality",
+            "pace",
+            null
+          ]
+        },
+        "changedDecisionEventId": {
+          "$comment": "The decision this correction changed.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/arenaId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "probeEventId": {
+          "$comment": "The later related decision this correction is meant to test.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/arenaId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "subject": {
+          "$comment": "What the event is about, for the inspection kinds.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "id"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "order",
+                "ingredient",
+                "equipment",
+                "handoff"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/arenaId"
+            }
+          }
+        },
+        "payload": {
+          "$comment": "The inspection-kind event body: the hold, evidence record, verification, escalation, handoff, or violation exactly as it was written to state.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

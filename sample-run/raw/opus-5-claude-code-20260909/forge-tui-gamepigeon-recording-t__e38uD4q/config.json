@@ -1,0 +1,53 @@
+{
+    "task": {
+        "path": "/tmp/specific-driver-oudt7ot2/tasks/forge-tui-gamepigeon-recording-trace-export-arena-trace-replay"
+    },
+    "trial_name": "forge-tui-gamepigeon-recording-t__e38uD4q",
+    "trials_dir": "/tmp/specific-driver-oudt7ot2/trials/run-614ebf4a263e",
+    "agent": {
+        "import_path": "specific_agents.claude_code_harness:BedrockClaudeCodeAgent",
+        "model_name": "bedrock/us.anthropic.claude-opus-5",
+        "n_concurrent": 6,
+        "override_timeout_sec": 7200.0,
+        "kwargs": {
+            "reasoning_effort": "high",
+            "max_output_tokens": "128000",
+            "model_id": "us.anthropic.claude-opus-5",
+            "provider": "bedrock"
+        }
+    },
+    "environment": {
+        "import_path": "specific_sandbox.fargate:FargateEnvironment",
+        "override_cpus": 4,
+        "override_memory_mb": 8192,
+        "override_storage_mb": 102400,
+        "kwargs": {
+            "cluster": "specific-runner",
+            "aws_region": "us-east-1",
+            "execution_role_arn": "arn:aws:iam::[REDACTED_AWS_ACCOUNT_ID]:role/specific-ecs-execution",
+            "task_role_arn": "arn:aws:iam::[REDACTED_AWS_ACCOUNT_ID]:role/specific-sandbox-task",
+            "subnets": [
+                "subnet-0c9e52e5b7cf928a6",
+                "subnet-0f4c08def45a6e152",
+                "subnet-0bd02ad16a3df6d61",
+                "subnet-03112c76fe14ada43",
+                "subnet-0cdc3bb7b1eacb43c",
+                "subnet-0687dee9d431ee2fa"
+            ],
+            "security_groups": [
+                "sg-00be588d0ca635066"
+            ],
+            "init_container_image_uri": "[REDACTED_AWS_ACCOUNT_ID].dkr.ecr.us-east-1.amazonaws.com/specific/runtime-init@sha256:dd046f65a2a2d6c42603bf4ad9e859f889a01fcd75b2a4d1d2bbad39c5675bce",
+            "use_spot": false,
+            "cpu_units": 4096,
+            "storage_gib": 100,
+            "sandbox_idle_timeout_sec": 600,
+            "tags": {
+                "specific:component": "sandbox",
+                "specific:run-id": "run-614ebf4a263e",
+                "specific:run-kind": "agent"
+            }
+        }
+    },
+    "job_id": "26c70f0a-b336-41d4-bd04-c0a7e8fcfb00"
+}

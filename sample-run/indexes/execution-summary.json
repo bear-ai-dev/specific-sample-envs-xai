@@ -1,0 +1,138 @@
+{
+  "scored_valid_trials": 80,
+  "denominator_policy": "Only completed trials with numeric rewards are scored.",
+  "configuration_policy": "Model, provider, harness, and harness version remain explicit and are not pooled.",
+  "by_configuration": {
+    "grok-4.6-grok-build": {
+      "model": "Grok 4.6",
+      "route": "x-ai/grok-4.6",
+      "provider": "OpenRouter",
+      "harness": "Grok Build",
+    "agent_versions": {
+      "1.0.25": 40
+      },
+      "tasks": [
+        "01-overlay-shell-ui-session-pause-window-lifecycle",
+        "02-recording-trace-export-arena-trace-replay",
+        "03-restaurant-arena-engine-correction-scope-probe",
+        "04-auth-handoff-cli-browser-oauth",
+        "05-arena-overlay-presentation-layout-staff-walk-repaint-gate"
+      ],
+      "scored": 40,
+      "solved": 15,
+      "pass_rate": 0.375,
+      "mean_wall_clock_seconds": 1053.3,
+      "mean_output_tokens": 56733.15,
+      "mean_step_count": 45.475
+    },
+    "opus-5-claude-code": {
+      "model": "Opus 5",
+      "route": "us.anthropic.claude-opus-5",
+      "provider": "Amazon Bedrock",
+      "harness": "Claude Code",
+    "agent_versions": {
+      "2.1.258": 40
+      },
+      "tasks": [
+        "01-overlay-shell-ui-session-pause-window-lifecycle",
+        "02-recording-trace-export-arena-trace-replay",
+        "03-restaurant-arena-engine-correction-scope-probe",
+        "04-auth-handoff-cli-browser-oauth",
+        "05-arena-overlay-presentation-layout-staff-walk-repaint-gate"
+      ],
+      "scored": 40,
+      "solved": 31,
+      "pass_rate": 0.775,
+      "mean_wall_clock_seconds": 1455.475,
+      "mean_output_tokens": 87263.35,
+      "mean_step_count": 118.65
+    }
+  },
+  "by_task": {
+    "01-overlay-shell-ui-session-pause-window-lifecycle": {
+      "grok-4.6-grok-build": {
+        "scored": 8,
+        "solved": 1,
+        "runs": [
+          "run-5e3f4536403c"
+        ]
+      },
+      "opus-5-claude-code": {
+        "scored": 8,
+        "solved": 5,
+        "runs": [
+          "run-bca820f7288c",
+          "run-cf47cf234995"
+        ]
+      }
+    },
+    "02-recording-trace-export-arena-trace-replay": {
+      "grok-4.6-grok-build": {
+        "scored": 8,
+        "solved": 5,
+        "runs": [
+          "run-2e4ba03c28b4"
+        ]
+      },
+      "opus-5-claude-code": {
+        "scored": 8,
+        "solved": 7,
+        "runs": [
+          "run-614ebf4a263e",
+          "run-e5a09bcc1c79"
+        ]
+      }
+    },
+    "03-restaurant-arena-engine-correction-scope-probe": {
+      "grok-4.6-grok-build": {
+        "scored": 8,
+        "solved": 3,
+        "runs": [
+          "run-0b5c41265bd5"
+        ]
+      },
+      "opus-5-claude-code": {
+        "scored": 8,
+        "solved": 6,
+        "runs": [
+          "run-0185146068d6",
+          "run-47110852f037"
+        ]
+      }
+    },
+    "04-auth-handoff-cli-browser-oauth": {
+      "grok-4.6-grok-build": {
+        "scored": 8,
+        "solved": 4,
+        "runs": [
+          "run-391e173af3dc"
+        ]
+      },
+      "opus-5-claude-code": {
+        "scored": 8,
+        "solved": 6,
+        "runs": [
+          "run-3780b16b1b5a",
+          "run-561288a03626"
+        ]
+      }
+    },
+    "05-arena-overlay-presentation-layout-staff-walk-repaint-gate": {
+      "grok-4.6-grok-build": {
+        "scored": 8,
+        "solved": 2,
+        "runs": [
+          "run-9ce2b11b00f3"
+        ]
+      },
+      "opus-5-claude-code": {
+        "scored": 8,
+        "solved": 7,
+        "runs": [
+          "run-6adac35dab6d",
+          "run-c9bb94efbe6e"
+        ]
+      }
+    }
+  }
+}

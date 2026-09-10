@@ -1,0 +1,21 @@
+Baseline
+$ bun scripts/export-arena-trace.ts --check
+error: Module not found "scripts/export-arena-trace.ts"
+export exit: 1
+
+$ bun scripts/replay-arena-trace.ts contracts/fixtures/restaurant-arena-trace-v3.json
+error: Module not found "scripts/replay-arena-trace.ts"
+replay exit: 1
+
+Protected verifier: reward 0
+
+Reference solution
+$ bun scripts/export-arena-trace.ts --check
+Fixture is current (17 events).
+export exit: 0
+
+$ bun scripts/replay-arena-trace.ts contracts/fixtures/restaurant-arena-trace-v3.json
+Native replay passed: 26 inputs, tick 24, completed, sha256:48fe059e4e1dc0ef994e06e019bbb6e13b2d67dd7b0377c28fd1f85b96da732d
+replay exit: 0
+
+Protected verifier: reward 1

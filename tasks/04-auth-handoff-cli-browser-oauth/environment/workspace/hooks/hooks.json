@@ -1,0 +1,86 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "true",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-update.ts", "--check"],
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts", "--reset"],
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/arcade-engagement.ts", "--reset"],
+            "async": true
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "true",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-update.ts", "--nudge"]
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/arcade-engagement.ts", "--deliver"]
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts", "--show"],
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "true",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts", "--pause"],
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/arcade-engagement.ts", "--arm"]
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "type": "command",
+        "command": "true",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/run-with-bun.cjs", "${CLAUDE_PLUGIN_ROOT}/scripts/overlay.ts", "--quit"]
+          }
+        ]
+      }
+    ]
+  }
+}

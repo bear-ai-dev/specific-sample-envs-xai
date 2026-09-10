@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "canonical_id": "04-auth-handoff-cli-browser-oauth__trial-08",
+  "task": "04-auth-handoff-cli-browser-oauth",
+  "trial_number": 8,
+  "cohort": "tui-gamepigeon-opus-grok-20260910",
+  "run_id": "run-3780b16b1b5a",
+  "configuration": "opus-5-claude-code",
+  "model": "bedrock/us.anthropic.claude-opus-5",
+  "model_label": "Opus 5",
+  "route": "us.anthropic.claude-opus-5",
+  "provider": "Amazon Bedrock",
+  "harness": "Claude Code",
+  "agent_version": "2.1.258",
+  "reasoning_effort": "high",
+  "max_output_tokens": 128000,
+  "status": "complete",
+  "reward": 1,
+  "solved": true,
+  "source_trial": "forge-tui-gamepigeon-auth-handof__zoBNx5Q",
+  "raw_dir": "sample-run/raw/opus-5-claude-code-20260909/forge-tui-gamepigeon-auth-handof__zoBNx5Q",
+  "metrics": {
+    "wall_clock_seconds": 974,
+    "output_tokens": 62409,
+    "step_count": 78
+  },
+  "trajectory": {
+    "path": "trajectories/04-auth-handoff-cli-browser-oauth/opus-5-claude-code/trajectory-trial-08.json",
+    "sha256": "58d3f5f710288c28f5f96aaf5517e679e935d81a7361a30e34097d6cc8e5c373",
+    "redacted": true
+  }
+}

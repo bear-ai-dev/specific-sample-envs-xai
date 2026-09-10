@@ -1,0 +1,11 @@
+Configuration: Grok 4.6 with Grok Build
+Trial: 04
+Source trial: forge-tui-gamepigeon-recording-t__VqWTUWF
+Source run: run-2e4ba03c28b4
+Reward: 0
+Verifier: 10 passed, 1 failed
+
+Failed check:
+- captureTrace requires an explicit, valid runKind
+
+Why it failed: The trace pipeline works, but it accepts a trace without its required run type.
