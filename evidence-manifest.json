@@ -199,90 +199,10 @@
         }
       },
       "sha256": {
-        "before.png": "a2b8998e4620e189413c96898db551bfb610da43c56ca6d7cfef6647576dd772",
-        "after.png": "cf7cc910111e640a3a356334fad8c344c38ad81ee6e91050b55e38da9737ed5d",
+        "before.png": "8f98f8f84230f7eaf76fec3f1964435342e6a21ee1f6a2a2c5544f95ee3a86cf",
+        "after.png": "e073e3ed1128744d2eaac9f5af1058a30d340d961cc719c99a4954a5309585ff",
         "verification.mp4": "100f694b21210ea5582ba7d2db50415e9758691eb2adaab1d8f3b70980b0f462",
-        "verification.txt": "c4cf72e681f3403429858185d5a766dac33c4c3829594e8d708456d1015e221a",
-        "after-cancelled.png": "2b7c0177ac7c3a7bffa3dd70aa4129b6a578ad9616ab337b30c7266a69f48937",
-        "after-error.png": "c6a3bb8ecfd0770a605c1dd77fe6bac13fb5d713f82e73a41f4c50addc4855a3"
-      },
-      "browser_ui": {
-        "captured_on": "2026-09-17",
-        "capture_method": "Local Chromium screenshots of the saved implementation; not images recorded during the rollout.",
-        "viewport": "1280x720",
-        "browser": "151.0.7922.34",
-        "baseline": {
-          "repository_commit": "ccd115117b859f1067be8651ca4be2009ce184d3",
-          "source": "tasks/04-auth-handoff-cli-browser-oauth/environment/workspace/src/auth.ts",
-          "callback_export": "absent",
-          "oauth_command": "unsupported; usage lists signup/login/status/logout",
-          "image": "before.png",
-          "scenario": "Directly open a localhost callback URL without a listener, reflecting the missing baseline callback. Chromium displays ERR_CONNECTION_REFUSED."
-        },
-        "after": {
-          "configuration": "grok-4.6-grok-build",
-          "trial_number": 1,
-          "source_trial": "forge-tui-gamepigeon-auth-handof__ETMy8sV",
-          "source_run": "run-391e173af3dc",
-          "reward": 1,
-          "archive": "s3://specific-artifacts-237343249281-us-east-1/harbor/rollout-artifacts/run-391e173af3dc/forge-tui-gamepigeon-auth-handof__ETMy8sV/artifacts/logs/artifacts/workdir.tar.gz",
-          "source_files": [
-            {
-              "path": "src/sync/config.ts",
-              "sha256": "6a88f38f4db1b374341ae52415bef3c4159fd04ce894ad0367c4f77f949f275c",
-              "size": 3822
-            },
-            {
-              "path": "src/auth.ts",
-              "sha256": "665a1144fc45f06aa0e881023cd8d0a402d856a2b51a258785ec5843408d8288",
-              "size": 16607
-            },
-            {
-              "path": "src/recording/permissions.ts",
-              "sha256": "662795e239befc635ce08d9f95d048ccfa50f092c961332fa7980c73ab9e1375",
-              "size": 276
-            },
-            {
-              "path": "src/auth-pages.ts",
-              "sha256": "3073ff580b217df6f9aa2422659a683f9ed25b090b16e53c800521e0af6d331e",
-              "size": 4885
-            },
-            {
-              "path": "cloudflare/auth-worker/src/auth.ts",
-              "sha256": "cfd182eeae169419ab60e667f93d0e09bf31d0562a1f1e350c412e6534c8b82a",
-              "size": 1793
-            },
-            {
-              "path": "cloudflare/auth-worker/src/index.ts",
-              "sha256": "1c14e91e5b723612f154fa330d26e03ac0027fba694ea5752f6394292a7b4173",
-              "size": 6132
-            },
-            {
-              "path": "cloudflare/auth-worker/src/handoff-page.ts",
-              "sha256": "5a7788ede6c04847c0586bb83a4c3b82df66fc53078bfa5dd5d0e79d27024398",
-              "size": 5066
-            }
-          ],
-          "fixture_token": "ui-capture-fixture",
-          "fixture_error_description": "The sign-in request expired. Please try again.",
-          "implementation_modified": false,
-          "live_provider_login": false,
-          "session_persistence_exercised": false
-        },
-        "checks": {
-          "success_http_status": 200,
-          "cancellation_http_status": 400,
-          "error_http_status": 400,
-          "callback_cache_control": "no-store",
-          "fixture_token_received": true
-        },
-        "screenshots": {
-          "before.png": "a2b8998e4620e189413c96898db551bfb610da43c56ca6d7cfef6647576dd772",
-          "after.png": "cf7cc910111e640a3a356334fad8c344c38ad81ee6e91050b55e38da9737ed5d",
-          "after-cancelled.png": "2b7c0177ac7c3a7bffa3dd70aa4129b6a578ad9616ab337b30c7266a69f48937",
-          "after-error.png": "c6a3bb8ecfd0770a605c1dd77fe6bac13fb5d713f82e73a41f4c50addc4855a3"
-        },
-        "scope": "Callback success, cancellation and error pages. Existing verification.txt and verification.mp4 remain baseline/reference test-result evidence."
+        "verification.txt": "c4cf72e681f3403429858185d5a766dac33c4c3829594e8d708456d1015e221a"
       }
     },
     "05-arena-overlay-presentation-layout-staff-walk-repaint-gate": {

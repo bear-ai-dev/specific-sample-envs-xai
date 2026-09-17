@@ -10,20 +10,6 @@ The gaming CLI needs Google and GitHub browser sign-in without weakening its loc
 | Opus 5 | Claude Code | 19m | 67,822.1 | 87.5 |
 | Grok 4.6 | Grok Build | 19m | 61,519.4 | 46.6 |
 
-### Before and after
-
-| Before — callback unavailable | After — successful sign-in callback |
-|---|---|
-| ![Opening the callback URL without a listener produces a browser connection error](evidence/before.png) | ![The passing Grok implementation renders the signed-in page](evidence/after.png) |
-
-The baseline has no CLI OAuth callback listener or page. The before image shows
-the browser error when that callback URL is opened. The after image was captured
-locally from the unmodified final code saved by the passing Grok trial 01, using
-a fixture token. These are browser captures made from the saved implementation,
-not screenshots recorded during the rollout or a live Google/GitHub login.
-
-[Cancellation page](evidence/after-cancelled.png) · [Error page](evidence/after-error.png) · [Capture provenance](../../evidence-manifest.json) · [Baseline/reference verifier results](evidence/verification.txt)
-
 ### Scored rollout examples
 
 | Grok passed | Grok failed | Opus failed |
